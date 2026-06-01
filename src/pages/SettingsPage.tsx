@@ -31,6 +31,7 @@ export function SettingsPage({ stats, onUpdateAudio }: { stats: UserStats; onUpd
             <span className="mb-2 block">朗读速度</span>
             <select value={settings.speechRate} onChange={(event) => update({ speechRate: Number(event.target.value) as AudioSettings["speechRate"] })} className="w-full rounded-md border border-slate-200 bg-white p-2">
               <option value={0.8}>0.8</option>
+              <option value={0.9}>0.9 推荐</option>
               <option value={1}>1.0</option>
               <option value={1.1}>1.1</option>
             </select>

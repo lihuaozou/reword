@@ -119,7 +119,7 @@ export function createDefaultUserStats(): UserStats {
       autoPlayOnStudy: false,
       autoPlayOnRecall: false,
       defaultAccent: "us",
-      speechRate: 1,
+      speechRate: 0.9,
       repeatCount: 1,
     },
   };

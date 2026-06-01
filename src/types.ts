@@ -63,7 +63,7 @@ export type AudioSettings = {
   autoPlayOnStudy: boolean;
   autoPlayOnRecall: boolean;
   defaultAccent: AudioAccent;
-  speechRate: 0.8 | 1 | 1.1;
+  speechRate: 0.8 | 0.9 | 1 | 1.1;
   repeatCount: 1 | 2;
 };
 
