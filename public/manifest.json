@@ -1,12 +1,12 @@
 {
   "name": "2027考研英语记忆系统",
   "short_name": "考研单词",
+  "description": "基于艾宾浩斯周期的考研英语红宝书本地重复记忆工具",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#6366f1",
-  "description": "基于艾宾浩斯周期的考研英语单词本地记忆工具",
   "icons": [
     {
       "src": "icons/icon-192.png",

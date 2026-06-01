@@ -42,7 +42,8 @@ export function stopAudio() {
 
 export function playLocalAudio(word: string, accent: AudioAccent) {
   return new Promise<void>((resolve, reject) => {
-    const audio = new Audio(`/audio/${accent}/${normalizeWord(word)}.mp3`);
+    const base = import.meta.env.BASE_URL || "/";
+    const audio = new Audio(`${base}audio/${accent}/${normalizeWord(word)}.mp3`);
     currentAudio = audio;
     audio.onended = () => resolve();
     audio.onerror = () => reject(new Error("local audio missing"));
@@ -94,15 +95,16 @@ export async function speakWithWebSpeech(word: string, accent: AudioAccent, sett
 export async function playWordAudio(word: string, accent: AudioAccent, settings: Partial<AudioSettings> = {}) {
   stopAudio();
   try {
-    await speakWithWebSpeech(word.replace(/-/g, " "), accent, settings);
-  } catch {
     await playLocalAudio(word, accent);
+  } catch {
+    await speakWithWebSpeech(word.replace(/-/g, " "), accent, settings);
   }
 }
 
 export function preloadAudio(word: string) {
+  const base = import.meta.env.BASE_URL || "/";
   ["us", "uk"].forEach((accent) => {
-    const audio = new Audio(`/audio/${accent}/${normalizeWord(word)}.mp3`);
+    const audio = new Audio(`${base}audio/${accent}/${normalizeWord(word)}.mp3`);
     audio.preload = "metadata";
   });
 }

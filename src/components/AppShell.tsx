@@ -1,7 +1,10 @@
 import { BookMarked } from "lucide-react";
 import type { ReactNode } from "react";
 import type { RouteName } from "../types";
-import { BottomNav } from "./BottomNav";
+import { DesktopSidebar } from "./layout/DesktopSidebar";
+import { MobileBottomNav } from "./layout/MobileBottomNav";
+import { ResponsiveContainer } from "./layout/ResponsiveContainer";
+import { TabletSidebar } from "./layout/TabletSidebar";
 
 type AppShellProps = {
   current: RouteName;
@@ -12,8 +15,11 @@ type AppShellProps = {
 export function AppShell({ current, onNavigate, children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-app text-ink">
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-[#f8fbff]/95 backdrop-blur">
-        <div className="mx-auto flex max-w-[1100px] items-center justify-between px-4 py-3 md:px-6">
+      <DesktopSidebar current={current} onNavigate={onNavigate} />
+      <TabletSidebar current={current} onNavigate={onNavigate} />
+
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-[#f8fbff]/95 backdrop-blur md:hidden">
+        <div className="mx-auto flex items-center justify-between px-4 py-3">
           <button type="button" onClick={() => onNavigate("dashboard")} className="flex items-center gap-3 text-left">
             <span className="grid h-9 w-9 place-items-center rounded-lg border border-ink/15 bg-ink text-paper">
               <BookMarked size={20} aria-hidden="true" />
@@ -23,11 +29,13 @@ export function AppShell({ current, onNavigate, children }: AppShellProps) {
               <span className="text-xs text-slate-500">2027考研英语红宝书</span>
             </span>
           </button>
-          <BottomNav current={current} onNavigate={onNavigate} />
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1100px] px-4 pb-28 pt-5 md:px-6 md:pb-10">{children}</main>
+      <div className="md:pl-20 lg:pl-64">
+        <ResponsiveContainer>{children}</ResponsiveContainer>
+      </div>
+      <MobileBottomNav current={current} onNavigate={onNavigate} />
     </div>
   );
 }

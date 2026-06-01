@@ -74,7 +74,7 @@ export function UnitsPage({ units, progressMap, onOpenUnit }: UnitsPageProps) {
             </div>
           </section>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {requiredUnits.map((unit) => {
               const stats = unitProgress(unit.words, progressMap);
               return (

@@ -1,13 +1,14 @@
-﻿import { Eye, RotateCcw, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Eye, RotateCcw, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { AudioSettings, ProgressMap, WordEntry } from "../types";
 import { AudioButton } from "../components/AudioButton";
 import { EmptyState } from "../components/EmptyState";
 import { ModeTabs } from "../components/ModeTabs";
 import { WordCard } from "../components/WordCard";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { playWordAudio } from "../utils/audio";
 import { getDueWords, isDue } from "../utils/scheduler";
-import { formatDateTime } from "../utils/view";
+import { formatDateTime, statusLabel } from "../utils/view";
 
 type RecallPageProps = {
   title: string;
@@ -25,6 +26,9 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
   const [revealed, setRevealed] = useState(false);
   const activeWords = useMemo(() => (mode === "due" ? getDueWords(words, progressMap) : words), [mode, words, progressMap]);
   const current = activeWords[Math.min(index, Math.max(0, activeWords.length - 1))];
+  const progress = current ? progressMap[current.id] : undefined;
+  const listStart = Math.max(0, index - 10);
+  const visibleQueue = activeWords.slice(listStart, Math.min(activeWords.length, listStart + 24));
 
   useEffect(() => {
     if (!current || !audioSettings.autoPlayOnRecall) return;
@@ -41,6 +45,14 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
     });
   };
 
+  useKeyboardShortcuts({
+    onSpace: () => current && playWordAudio(current.word, audioSettings.defaultAccent, audioSettings),
+    onOne: () => handleGrade("known"),
+    onTwo: () => handleGrade("fuzzy"),
+    onThree: () => handleGrade("forgotten"),
+    onEnter: () => setRevealed((value) => !value),
+  });
+
   if (!activeWords.length) {
     return (
       <EmptyState
@@ -51,8 +63,6 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
       />
     );
   }
-
-  const progress = progressMap[current.id];
 
   return (
     <div className="space-y-5">
@@ -75,45 +85,101 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
         />
       </div>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
-          <span>
-            {Math.min(index + 1, activeWords.length)} / {activeWords.length}
-          </span>
-          <span>{isDue(progress) ? "已到期" : "未到期"}，Stage {progress?.stage || 0}，下次 {formatDateTime(progress?.nextReviewAt)}</span>
-        </div>
-
-        <div className="py-10 text-center">
-          <div className="text-5xl font-semibold text-ink">{current.word}</div>
-          <div className="mt-3 text-xl text-slate-500">{current.phonetic}</div>
-          <div className="mt-4 flex justify-center gap-2">
-            <AudioButton word={current.word} accent="us" settings={audioSettings} />
-            <AudioButton word={current.word} accent="uk" settings={audioSettings} />
+      <div className="grid gap-5 md:grid-cols-[250px_1fr] lg:grid-cols-[250px_minmax(0,1fr)_280px]">
+        <aside className="hidden rounded-lg border border-slate-200 bg-white p-3 shadow-soft md:block">
+          <div className="mb-3 flex items-center justify-between px-1 text-sm">
+            <span className="font-semibold text-ink">复习队列</span>
+            <span className="text-slate-500">{activeWords.length}</span>
           </div>
-        </div>
+          <div className="max-h-[68vh] space-y-1 overflow-y-auto pr-1">
+            {visibleQueue.map((word, offset) => {
+              const absoluteIndex = listStart + offset;
+              const active = absoluteIndex === index;
+              return (
+                <button
+                  key={word.id}
+                  type="button"
+                  onClick={() => {
+                    setIndex(absoluteIndex);
+                    setRevealed(false);
+                  }}
+                  className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3 text-left text-sm transition ${
+                    active ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-[#f8fbff] hover:text-ink"
+                  }`}
+                >
+                  <span className="min-w-0 truncate font-semibold">{word.word}</span>
+                  <span className="shrink-0 text-xs">S{progressMap[word.id]?.stage || 0}</span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
 
-        {revealed ? <WordCard word={current} progress={progress} compact audioSettings={audioSettings} /> : null}
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+            <span>
+              {Math.min(index + 1, activeWords.length)} / {activeWords.length}
+            </span>
+            <span>{isDue(progress) ? "已到期" : "未到期"}，Stage {progress?.stage || 0}，下次 {formatDateTime(progress?.nextReviewAt)}</span>
+          </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-4">
-          <button type="button" onClick={() => setRevealed((value) => !value)} className="btn-secondary">
-            <Eye size={18} aria-hidden="true" />
-            查看释义
-          </button>
-          <button type="button" onClick={() => handleGrade("known")} className="btn-primary">
-            <ThumbsUp size={18} aria-hidden="true" />
-            记住
-          </button>
-          <button type="button" onClick={() => handleGrade("fuzzy")} className="btn-secondary">
-            <RotateCcw size={18} aria-hidden="true" />
-            不太熟
-          </button>
-          <button type="button" onClick={() => handleGrade("forgotten")} className="btn-danger">
-            <ThumbsDown size={18} aria-hidden="true" />
-            不记住
-          </button>
-        </div>
-      </section>
+          <div className="py-10 text-center">
+            <div className="break-words text-5xl font-semibold text-ink">{current.word}</div>
+            <div className="mt-3 text-xl text-slate-500">{current.phonetic}</div>
+            <div className="mt-4 flex justify-center gap-2">
+              <AudioButton word={current.word} accent="us" settings={audioSettings} />
+              <AudioButton word={current.word} accent="uk" settings={audioSettings} />
+            </div>
+          </div>
+
+          {revealed ? <WordCard word={current} progress={progress} compact audioSettings={audioSettings} /> : null}
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-4">
+            <button type="button" onClick={() => setRevealed((value) => !value)} className="btn-secondary">
+              <Eye size={18} aria-hidden="true" />
+              查看释义
+            </button>
+            <button type="button" onClick={() => handleGrade("known")} className="btn-primary">
+              <ThumbsUp size={18} aria-hidden="true" />
+              记住
+            </button>
+            <button type="button" onClick={() => handleGrade("fuzzy")} className="btn-secondary">
+              <RotateCcw size={18} aria-hidden="true" />
+              不太熟
+            </button>
+            <button type="button" onClick={() => handleGrade("forgotten")} className="btn-danger">
+              <ThumbsDown size={18} aria-hidden="true" />
+              不记住
+            </button>
+          </div>
+        </section>
+
+        <aside className="hidden space-y-4 lg:block">
+          <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
+            <h2 className="font-semibold text-ink">复习反馈</h2>
+            <div className="mt-4 space-y-3 text-sm">
+              <div className="rounded-lg bg-[#f8fbff] p-3">
+                <span className="block text-slate-500">当前状态</span>
+                <span className="mt-1 block font-semibold text-ink">{statusLabel(progress)}</span>
+              </div>
+              <div className="rounded-lg bg-[#f8fbff] p-3">
+                <span className="block text-slate-500">打怪伤害</span>
+                <span className="mt-1 block font-semibold text-indigo-600">记住 +3，不熟 +1</span>
+              </div>
+            </div>
+          </section>
+          <section className="rounded-lg border border-slate-200 bg-white p-4 text-sm shadow-soft">
+            <h2 className="font-semibold text-ink">快捷键</h2>
+            <div className="mt-3 grid gap-2 text-slate-500">
+              <span>Space 播放发音</span>
+              <span>1 记住</span>
+              <span>2 不太熟</span>
+              <span>3 不记住</span>
+              <span>Enter 查看释义</span>
+            </div>
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }
-

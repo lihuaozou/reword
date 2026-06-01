@@ -1,9 +1,12 @@
-﻿import { ArrowLeft, ArrowRight, Check, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { AudioSettings, ProgressMap, WordEntry, WordUnit } from "../types";
 import { ProgressBar } from "../components/ProgressBar";
 import { WordCard } from "../components/WordCard";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useResponsive } from "../hooks/useResponsive";
 import { playWordAudio } from "../utils/audio";
+import { formatDateTime, statusLabel } from "../utils/view";
 
 type StudyPageProps = {
   unit?: WordUnit;
@@ -17,17 +20,28 @@ export function StudyPage({ unit, words, progressMap, audioSettings, onLearn }: 
   const [index, setIndex] = useState(0);
   const current = words[index];
   const learnedCount = useMemo(() => words.filter((word) => progressMap[word.id]?.learned).length, [words, progressMap]);
+  const { isDesktop } = useResponsive();
+  const currentProgress = current ? progressMap[current.id] : undefined;
+  const listStart = Math.max(0, index - 12);
+  const visibleWords = words.slice(listStart, Math.min(words.length, listStart + 28));
 
   useEffect(() => {
     if (!current || !audioSettings.autoPlayOnStudy) return;
     playWordAudio(current.word, audioSettings.defaultAccent, audioSettings).catch(() => undefined);
   }, [current, audioSettings]);
 
-  if (!current) return null;
-
   const move = (offset: number) => {
     setIndex((value) => Math.min(words.length - 1, Math.max(0, value + offset)));
   };
+
+  useKeyboardShortcuts({
+    onSpace: () => current && playWordAudio(current.word, audioSettings.defaultAccent, audioSettings),
+    onArrowLeft: () => move(-1),
+    onArrowRight: () => move(1),
+    onEnter: () => current && onLearn(current.id),
+  });
+
+  if (!current) return null;
 
   return (
     <div className="space-y-5">
@@ -43,9 +57,69 @@ export function StudyPage({ unit, words, progressMap, audioSettings, onLearn }: 
 
       <ProgressBar value={index + 1} max={words.length} label={`浏览进度，已初学 ${learnedCount} 词`} />
 
-      <WordCard word={current} progress={progressMap[current.id]} audioSettings={audioSettings} />
+      <div className="grid gap-5 md:grid-cols-[260px_1fr] lg:grid-cols-[260px_minmax(0,1fr)_280px]">
+        <aside className="hidden rounded-lg border border-slate-200 bg-white p-3 shadow-soft md:block">
+          <div className="mb-3 flex items-center justify-between gap-2 px-1 text-sm">
+            <span className="font-semibold text-ink">单词目录</span>
+            <span className="text-slate-500">{index + 1}/{words.length}</span>
+          </div>
+          <div className="max-h-[68vh] space-y-1 overflow-y-auto pr-1">
+            {visibleWords.map((word, offset) => {
+              const absoluteIndex = listStart + offset;
+              const active = absoluteIndex === index;
+              return (
+                <button
+                  key={word.id}
+                  type="button"
+                  onClick={() => setIndex(absoluteIndex)}
+                  className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3 text-left text-sm transition ${
+                    active ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-[#f8fbff] hover:text-ink"
+                  }`}
+                >
+                  <span className="min-w-0 truncate font-semibold">{word.word}</span>
+                  <span className="shrink-0 text-xs">#{word.order}</span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
 
-      <div className="grid gap-3 sm:grid-cols-4">
+        <section className="min-w-0">
+          <WordCard word={current} progress={currentProgress} audioSettings={audioSettings} />
+        </section>
+
+        <aside className="hidden space-y-4 lg:block">
+          <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
+            <h2 className="font-semibold text-ink">当前记忆状态</h2>
+            <div className="mt-4 space-y-3 text-sm">
+              <div className="flex justify-between rounded-lg bg-[#f8fbff] p-3">
+                <span className="text-slate-500">Stage</span>
+                <span className="font-semibold text-ink">{currentProgress?.stage || 0}</span>
+              </div>
+              <div className="flex justify-between rounded-lg bg-[#f8fbff] p-3">
+                <span className="text-slate-500">状态</span>
+                <span className="font-semibold text-ink">{statusLabel(currentProgress)}</span>
+              </div>
+              <div className="rounded-lg bg-[#f8fbff] p-3">
+                <span className="block text-slate-500">下次复习</span>
+                <span className="mt-1 block font-semibold text-ink">{formatDateTime(currentProgress?.nextReviewAt)}</span>
+              </div>
+            </div>
+          </section>
+          {isDesktop ? (
+            <section className="rounded-lg border border-slate-200 bg-white p-4 text-sm shadow-soft">
+              <h2 className="font-semibold text-ink">快捷键</h2>
+              <div className="mt-3 grid gap-2 text-slate-500">
+                <span>Space 播放发音</span>
+                <span>← / → 切换单词</span>
+                <span>Enter 标记已学</span>
+              </div>
+            </section>
+          ) : null}
+        </aside>
+      </div>
+
+      <div className="sticky bottom-20 z-20 grid gap-3 rounded-lg border border-slate-200 bg-[#f8fbff]/95 p-2 shadow-soft backdrop-blur sm:grid-cols-4 md:static md:border-0 md:bg-transparent md:p-0 md:shadow-none">
         <button type="button" onClick={() => move(-1)} disabled={index === 0} className="btn-secondary disabled:opacity-40">
           <ArrowLeft size={18} aria-hidden="true" />
           上一个
@@ -66,4 +140,3 @@ export function StudyPage({ unit, words, progressMap, audioSettings, onLearn }: 
     </div>
   );
 }
-
