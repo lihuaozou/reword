@@ -2,10 +2,12 @@ import { Eye, RotateCcw, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { AudioSettings, ProgressMap, WordEntry } from "../types";
 import { AudioButton } from "../components/AudioButton";
+import { DefinitionSheet } from "../components/DefinitionSheet";
 import { EmptyState } from "../components/EmptyState";
 import { ModeTabs } from "../components/ModeTabs";
 import { WordCard } from "../components/WordCard";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useResponsive } from "../hooks/useResponsive";
 import { playWordAudio } from "../utils/audio";
 import { getDueWords, isDue } from "../utils/scheduler";
 import { formatDateTime, statusLabel } from "../utils/view";
@@ -29,6 +31,7 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
   const progress = current ? progressMap[current.id] : undefined;
   const listStart = Math.max(0, index - 10);
   const visibleQueue = activeWords.slice(listStart, Math.min(activeWords.length, listStart + 24));
+  const { isMobile } = useResponsive();
 
   useEffect(() => {
     if (!current || !audioSettings.autoPlayOnRecall) return;
@@ -61,6 +64,80 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
         actionLabel={onBackToStudy ? "去记忆模式" : undefined}
         onAction={onBackToStudy}
       />
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <div className="min-h-[calc(100dvh-136px)] space-y-3 pb-28">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-xs font-semibold uppercase text-copper">Recall</div>
+            <h1 className="truncate text-lg font-semibold text-ink">{title}</h1>
+          </div>
+          <div className="shrink-0 text-right text-xs text-slate-500">
+            {Math.min(index + 1, activeWords.length)} / {activeWords.length}
+          </div>
+        </div>
+
+        <ModeTabs
+          value={mode}
+          items={[
+            { value: "due", label: "到期词" },
+            { value: "all", label: "全部词" },
+          ]}
+          onChange={(value) => {
+            setMode(value);
+            setIndex(0);
+            setRevealed(false);
+          }}
+        />
+
+        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+            <span>S{progress?.stage || 0} · {statusLabel(progress)}</span>
+            <span>{formatDateTime(progress?.nextReviewAt)}</span>
+          </div>
+
+          <div className="py-7 text-center">
+            <div className={`break-words font-semibold leading-tight text-ink ${current.word.length > 12 ? "text-3xl" : "text-[34px]"}`}>{current.word}</div>
+            <div className="mt-2 text-sm text-slate-500">{current.phonetic}</div>
+            <div className="mt-3 flex justify-center gap-2">
+              <AudioButton word={current.word} accent="us" settings={audioSettings} compact />
+              <AudioButton word={current.word} accent="uk" settings={audioSettings} compact />
+            </div>
+          </div>
+
+          <button type="button" onClick={() => setRevealed(true)} className="btn-secondary h-11 min-h-0 w-full">
+            <Eye size={17} aria-hidden="true" />
+            查看释义
+          </button>
+        </section>
+
+        <DefinitionSheet
+          open={revealed}
+          onClose={() => setRevealed(false)}
+          word={current.word}
+          phonetic={current.phonetic}
+          definitions={current.definitions}
+          bottomOffset="calc(132px + env(safe-area-inset-bottom))"
+        />
+
+        <div className="fixed inset-x-3 z-40 grid grid-cols-3 gap-2" style={{ bottom: "calc(72px + env(safe-area-inset-bottom))" }}>
+          <button type="button" onClick={() => handleGrade("known")} className="inline-flex h-11 items-center justify-center gap-1 rounded-lg bg-emerald-600 px-2 text-xs font-semibold text-white shadow-sm active:translate-y-px">
+            <ThumbsUp size={15} aria-hidden="true" />
+            记住
+          </button>
+          <button type="button" onClick={() => handleGrade("fuzzy")} className="inline-flex h-11 items-center justify-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-2 text-xs font-semibold text-amber-700 shadow-sm active:translate-y-px">
+            <RotateCcw size={15} aria-hidden="true" />
+            不太熟
+          </button>
+          <button type="button" onClick={() => handleGrade("forgotten")} className="inline-flex h-11 items-center justify-center gap-1 rounded-lg border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 shadow-sm active:translate-y-px">
+            <ThumbsDown size={15} aria-hidden="true" />
+            不记住
+          </button>
+        </div>
+      </div>
     );
   }
 

@@ -6,6 +6,7 @@ import { EmptyState } from "../components/EmptyState";
 import { ProgressBar } from "../components/ProgressBar";
 import { WordCard } from "../components/WordCard";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useResponsive } from "../hooks/useResponsive";
 import { playWordAudio } from "../utils/audio";
 import { createQuizQuestions, type QuizQuestion } from "../utils/quiz";
 
@@ -32,6 +33,7 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
   const correct = selected === question?.answer;
   const total = score.correct + score.wrong;
   const accuracy = total ? Math.round((score.correct / total) * 100) : 0;
+  const { isMobile } = useResponsive();
 
   useEffect(() => {
     setQuizWords(words);
@@ -110,6 +112,72 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
             ))}
           </div>
         ) : null}
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <div className="min-h-[calc(100dvh-136px)] space-y-2 pb-20">
+        <div className="flex h-8 items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-xs font-semibold uppercase text-copper">Quiz</div>
+            <h1 className="truncate text-base font-semibold text-ink">{title}</h1>
+          </div>
+          <div className="shrink-0 text-right text-xs text-slate-500">
+            {index + 1}/{questions.length} · {accuracy}%
+          </div>
+        </div>
+
+        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+          <div className="h-full rounded-full bg-harbor" style={{ width: `${Math.min(100, ((index + 1) / questions.length) * 100)}%` }} />
+        </div>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-soft">
+          <div className="pb-3 pt-2 text-center">
+            <div className={`break-words font-semibold leading-tight text-ink ${question.word.word.length > 12 ? "text-2xl" : "text-[32px]"}`}>{question.word.word}</div>
+            <div className="mt-1 text-xs text-slate-500">{question.word.phonetic}</div>
+            <div className="mt-2 flex justify-center gap-2">
+              <AudioButton word={question.word.word} accent="us" settings={audioSettings} compact />
+              <AudioButton word={question.word.word} accent="uk" settings={audioSettings} compact />
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            {question.options.map((option) => {
+              const isAnswer = option === question.answer;
+              const active = selected === option;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => choose(option)}
+                  className={`flex min-h-12 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-[13px] font-semibold leading-snug transition ${
+                    answered && isAnswer
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : answered && active
+                        ? "border-rose-500 bg-rose-50 text-rose-700"
+                        : "border-slate-200 bg-[#f8fbff] text-slate-900 active:border-indigo-400"
+                  }`}
+                >
+                  <span className="mobile-option-clamp min-w-0">{option}</span>
+                  {answered && isAnswer ? <CheckCircle2 size={17} aria-hidden="true" /> : null}
+                  {answered && active && !isAnswer ? <XCircle size={17} aria-hidden="true" /> : null}
+                </button>
+              );
+            })}
+          </div>
+
+          {answered ? (
+            <div className={`mt-2 rounded-lg px-3 py-2 text-[13px] font-semibold leading-snug ${correct ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+              {correct ? "回答正确，阶段会向前推进。" : `回答错误：${question.answer}`}
+            </div>
+          ) : null}
+
+          <button type="button" onClick={nextQuestion} disabled={!answered} className="btn-primary mt-2 h-11 min-h-0 w-full disabled:opacity-40">
+            下一题
+          </button>
+        </section>
       </div>
     );
   }

@@ -88,4 +88,18 @@ input {
   .quiz-option {
     @apply flex min-h-14 items-center justify-between gap-3 rounded-lg border px-4 py-3.5 text-left text-base font-medium leading-7 transition;
   }
+
+  .mobile-def-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .mobile-option-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }

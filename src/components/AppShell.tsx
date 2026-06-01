@@ -13,6 +13,8 @@ type AppShellProps = {
 };
 
 export function AppShell({ current, onNavigate, children }: AppShellProps) {
+  const isLearningRoute = current === "study" || current === "recall" || current === "quiz";
+
   return (
     <div className="min-h-screen bg-app text-ink">
       <DesktopSidebar current={current} onNavigate={onNavigate} />
@@ -33,7 +35,7 @@ export function AppShell({ current, onNavigate, children }: AppShellProps) {
       </header>
 
       <div className="md:pl-20 lg:pl-64">
-        <ResponsiveContainer>{children}</ResponsiveContainer>
+        <ResponsiveContainer className={isLearningRoute ? "px-3 pb-0 pt-2 md:px-6 md:pb-12 md:pt-5 lg:px-8 lg:pt-6" : ""}>{children}</ResponsiveContainer>
       </div>
       <MobileBottomNav current={current} onNavigate={onNavigate} />
     </div>

@@ -58,6 +58,12 @@ export default function App() {
   const scopeWords = route.unitId ? selectedUnit.words : words;
 
   useEffect(() => {
+    if (route.name === "study" || route.name === "recall" || route.name === "quiz") {
+      window.scrollTo({ top: 0 });
+    }
+  }, [route.name, route.unitId]);
+
+  useEffect(() => {
     if (!latestReward) return;
     const timer = window.setTimeout(() => setLatestReward(undefined), 2600);
     return () => window.clearTimeout(timer);

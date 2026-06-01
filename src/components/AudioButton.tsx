@@ -7,9 +7,10 @@ type AudioButtonProps = {
   word: string;
   accent: AudioAccent;
   settings?: Partial<AudioSettings>;
+  compact?: boolean;
 };
 
-export function AudioButton({ word, accent, settings }: AudioButtonProps) {
+export function AudioButton({ word, accent, settings, compact = false }: AudioButtonProps) {
   const [speaking, setSpeaking] = useState(false);
 
   const play = async () => {
@@ -24,8 +25,14 @@ export function AudioButton({ word, accent, settings }: AudioButtonProps) {
   };
 
   return (
-    <button type="button" onClick={play} className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-harbor transition hover:border-harbor">
-      <Volume2 size={15} aria-hidden="true" />
+    <button
+      type="button"
+      onClick={play}
+      className={`inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white font-semibold text-harbor transition hover:border-harbor ${
+        compact ? "h-8 px-2.5 text-xs" : "px-2.5 py-1.5 text-sm"
+      }`}
+    >
+      <Volume2 size={compact ? 13 : 15} aria-hidden="true" />
       {accent.toUpperCase()}
       {speaking ? "..." : ""}
     </button>

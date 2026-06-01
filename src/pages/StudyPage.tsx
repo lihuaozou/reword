@@ -20,7 +20,7 @@ export function StudyPage({ unit, words, progressMap, audioSettings, onLearn }: 
   const [index, setIndex] = useState(0);
   const current = words[index];
   const learnedCount = useMemo(() => words.filter((word) => progressMap[word.id]?.learned).length, [words, progressMap]);
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isMobile } = useResponsive();
   const currentProgress = current ? progressMap[current.id] : undefined;
   const listStart = Math.max(0, index - 12);
   const visibleWords = words.slice(listStart, Math.min(words.length, listStart + 28));
@@ -42,6 +42,43 @@ export function StudyPage({ unit, words, progressMap, audioSettings, onLearn }: 
   });
 
   if (!current) return null;
+
+  if (isMobile) {
+    return (
+      <div className="min-h-[calc(100dvh-136px)] space-y-2 pb-24">
+        <div className="flex h-9 items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold text-ink">{unit?.name || "总记忆"}</div>
+            <div className="text-[11px] text-slate-500">已初学 {learnedCount} 词</div>
+          </div>
+          <div className="shrink-0 rounded-md border border-sky-100 bg-white px-2 py-1 text-xs font-semibold text-harbor">
+            {index + 1}/{words.length}
+          </div>
+        </div>
+
+        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+          <div className="h-full rounded-full bg-harbor" style={{ width: `${Math.min(100, ((index + 1) / words.length) * 100)}%` }} />
+        </div>
+
+        <WordCard word={current} progress={currentProgress} audioSettings={audioSettings} mobileCompact />
+
+        <div className="fixed inset-x-3 z-40 grid grid-cols-3 gap-2" style={{ bottom: "calc(72px + env(safe-area-inset-bottom))" }}>
+          <button type="button" onClick={() => move(-1)} disabled={index === 0} className="btn-secondary h-11 min-h-0 px-2 text-xs disabled:opacity-40">
+            <ArrowLeft size={16} aria-hidden="true" />
+            上一个
+          </button>
+          <button type="button" onClick={() => onLearn(current.id)} className="btn-primary h-11 min-h-0 px-2 text-xs">
+            <Check size={16} aria-hidden="true" />
+            已学
+          </button>
+          <button type="button" onClick={() => move(1)} disabled={index === words.length - 1} className="btn-secondary h-11 min-h-0 px-2 text-xs disabled:opacity-40">
+            下一个
+            <ArrowRight size={16} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
