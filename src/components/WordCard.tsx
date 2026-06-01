@@ -39,15 +39,17 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
           </div>
 
           <div className="p-3">
-            <div className="mb-2 grid h-20 place-items-center overflow-hidden rounded-lg border border-sky-100 bg-word-placeholder">
-              {word.image ? <img src={word.image} alt="" className="h-full w-full object-contain" loading="lazy" /> : <span className="text-xs font-semibold text-harbor/70">重复记忆</span>}
-            </div>
+            {word.image ? (
+              <div className="mb-2 grid h-20 place-items-center overflow-hidden rounded-lg border border-sky-100 bg-word-placeholder">
+                <img src={word.image} alt="" className="h-full w-full object-contain" loading="lazy" />
+              </div>
+            ) : null}
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {visibleDefinitions.map((definition, index) => (
-                <div key={`${word.id}-compact-def-${index}`} className="flex gap-2 rounded-lg border border-sky-100 bg-[#f8fbff] p-2">
-                  <span className="shrink-0 rounded-md bg-white px-2 py-0.5 text-[11px] font-semibold text-harbor">{definition.pos || "释义"}</span>
-                  <p className="mobile-def-clamp min-w-0 text-[13px] font-semibold leading-snug text-slate-950">{definition.meaning}</p>
+                <div key={`${word.id}-compact-def-${index}`} className="flex gap-2.5 rounded-lg border border-sky-100 bg-[#f8fbff] p-2.5">
+                  <span className="shrink-0 rounded-md bg-white px-2.5 py-1 text-[13px] font-semibold text-harbor">{definition.pos || "释义"}</span>
+                  <p className="mobile-def-clamp min-w-0 text-[16px] font-semibold leading-snug text-slate-950">{definition.meaning}</p>
                 </div>
               ))}
             </div>
