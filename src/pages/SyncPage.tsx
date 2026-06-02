@@ -32,7 +32,7 @@ export function SyncPage({ configured, online, user, state, message, lastSyncAt,
 
       {!configured || !user ? (
         <section className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-800">
-          {!configured ? "Supabase 未配置，暂时只能使用本地游客模式。" : "请先登录账号再同步。"}
+          {!configured ? "云同步未配置，本地模式可用。配置 Supabase 后即可同步。" : "请先登录账号再同步。"}
           <div className="mt-4 flex flex-wrap gap-3">
             <button type="button" onClick={onLogin} className="btn-primary">
               去登录

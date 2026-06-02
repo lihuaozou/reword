@@ -34,7 +34,7 @@ export function RegisterPage({ configured, loading, error, onRegister, onSuccess
         </div>
 
         {!configured ? (
-          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">Supabase 未配置，暂时不能注册账号。</div>
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">云同步未配置，本地模式可用。配置 Supabase 后即可注册账号。</div>
         ) : null}
         {error ? <div className="mb-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div> : null}
         {message ? <div className="mb-4 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</div> : null}

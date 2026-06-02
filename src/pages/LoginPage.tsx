@@ -49,7 +49,7 @@ export function LoginPage({ configured, loading, error, onLogin, onSuccess, onRe
 
         {!configured ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
-            Supabase 还没有配置。请先填写 `.env.local`，并按 `docs/SUPABASE_SETUP.md` 建表。当前仍可使用游客模式。
+            云同步未配置，本地模式可用。请先填写 `.env.local`，并按 `docs/SUPABASE_SETUP.md` 建表。当前仍可使用游客模式。
           </div>
         ) : null}
 

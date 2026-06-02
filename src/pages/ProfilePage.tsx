@@ -1,7 +1,8 @@
-import { Award, BarChart3, CalendarCheck2, Cloud, Download, Gift, RotateCcw, Settings, ShoppingBag, Upload } from "lucide-react";
+import { Award, BarChart3, CalendarCheck2, Cloud, Download, Gift, RefreshCcw, RotateCcw, Settings, ShoppingBag, Upload } from "lucide-react";
 import type { ChangeEvent } from "react";
-import type { ProgressMap, UserStats, WordEntry } from "../types";
+import type { ProgressMap, SyncState, UserStats, WordEntry } from "../types";
 import { CoinDisplay } from "../components/CoinDisplay";
+import { SyncStatusBadge } from "../components/auth/SyncStatusBadge";
 import { LevelProgress } from "../components/LevelProgress";
 import { StatCard } from "../components/StatCard";
 import { calculateTodayStats } from "../utils/scheduler";
@@ -18,8 +19,17 @@ type ProfilePageProps = {
   onNavigateAchievements: () => void;
   onNavigateSettings: () => void;
   onNavigateAccount: () => void;
+  syncStatus: {
+    configured: boolean;
+    online: boolean;
+    state: SyncState;
+    message: string;
+    lastSyncAt?: string;
+    pendingCount: number;
+  };
   onExport: () => void;
   onImport: (json: string) => void;
+  onClearCache: () => void;
   onReset: () => void;
 };
 
@@ -34,8 +44,10 @@ export function ProfilePage({
   onNavigateAchievements,
   onNavigateSettings,
   onNavigateAccount,
+  syncStatus,
   onExport,
   onImport,
+  onClearCache,
   onReset,
 }: ProfilePageProps) {
   const todayStats = calculateTodayStats(words, progressMap);
@@ -57,7 +69,17 @@ export function ProfilePage({
             <h1 className="mt-1 text-3xl font-semibold text-ink">我的学习账户</h1>
             <p className="mt-2 text-sm text-slate-500">进度、奖励、设置都在这里统一管理。</p>
           </div>
-          <CoinDisplay stats={stats} />
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <CoinDisplay stats={stats} />
+            <SyncStatusBadge
+              configured={syncStatus.configured}
+              online={syncStatus.online}
+              state={syncStatus.state}
+              message={syncStatus.message}
+              lastSyncAt={syncStatus.lastSyncAt}
+              pendingCount={syncStatus.pendingCount}
+            />
+          </div>
         </div>
       </section>
 
@@ -107,7 +129,7 @@ export function ProfilePage({
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
         <h2 className="text-lg font-semibold text-ink">进度管理</h2>
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <button type="button" onClick={onExport} className="btn-secondary">
             <Download size={18} aria-hidden="true" />
             导出进度
@@ -117,6 +139,10 @@ export function ProfilePage({
             导入进度
             <input type="file" accept="application/json,.json" className="sr-only" onChange={handleImport} />
           </label>
+          <button type="button" onClick={onClearCache} className="btn-secondary">
+            <RefreshCcw size={18} aria-hidden="true" />
+            清理缓存
+          </button>
           <button type="button" onClick={onReset} className="btn-danger">
             <RotateCcw size={18} aria-hidden="true" />
             清空进度

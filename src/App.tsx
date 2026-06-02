@@ -59,6 +59,7 @@ export default function App() {
   const [progressMap, setProgressMap] = useState<ProgressMap>(() => getProgress());
   const [userStats, setUserStats] = useState<UserStats>(() => getUserStats());
   const [latestReward, setLatestReward] = useState<RewardRecord | undefined>();
+  const [updateReady, setUpdateReady] = useState(false);
   const auth = useAuth();
 
   const applySyncSnapshot = useCallback((snapshot: SyncSnapshot) => {
@@ -93,6 +94,34 @@ export default function App() {
     const timer = window.setTimeout(() => setLatestReward(undefined), 2600);
     return () => window.clearTimeout(timer);
   }, [latestReward]);
+
+  useEffect(() => {
+    const onUpdateReady = () => setUpdateReady(true);
+    window.addEventListener("reword:update-ready", onUpdateReady);
+    return () => window.removeEventListener("reword:update-ready", onUpdateReady);
+  }, []);
+
+  const refreshToLatestVersion = async () => {
+    const registration = await navigator.serviceWorker?.getRegistration();
+    if (registration?.waiting) {
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
+      return;
+    }
+    window.location.reload();
+  };
+
+  const clearAppCache = async () => {
+    if (!window.confirm("只清理 PWA 缓存和旧版本文件，不会删除学习进度。继续吗？")) return;
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((key) => key.startsWith("reword-cache-")).map((key) => caches.delete(key)));
+    }
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+    window.location.reload();
+  };
 
   const finishStatsUpdate = (current: UserStats, next: UserStats, mapForAchievements = progressMap) => {
     const finalStats = unlockAvailableAchievements(next, words, mapForAchievements);
@@ -580,8 +609,17 @@ export default function App() {
         onNavigateAchievements={() => setRoute({ name: "achievements" })}
         onNavigateSettings={() => setRoute({ name: "settings" })}
         onNavigateAccount={() => setRoute({ name: "account" })}
+        syncStatus={{
+          configured: cloudSync.configured,
+          online: cloudSync.online,
+          state: cloudSync.state,
+          message: auth.user ? cloudSync.message : cloudSync.configured ? "游客本地模式" : cloudSync.message,
+          lastSyncAt: cloudSync.lastSyncAt,
+          pendingCount: cloudSync.pendingCount,
+        }}
         onExport={() => downloadJson(exportProgressToJson())}
         onImport={importProgress}
+        onClearCache={clearAppCache}
         onReset={resetProgress}
       />
     );
@@ -592,6 +630,22 @@ export default function App() {
       {latestReward ? (
         <div className="fixed left-1/2 top-20 z-50 w-[min(92vw,360px)] -translate-x-1/2">
           <RewardToast reward={latestReward} />
+        </div>
+      ) : null}
+      {updateReady ? (
+        <div className="fixed inset-x-3 top-16 z-50 mx-auto flex max-w-md items-center justify-between gap-3 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm shadow-soft md:top-4">
+          <span className="font-semibold text-ink">发现新版本</span>
+          <div className="flex shrink-0 gap-2">
+            <button type="button" onClick={() => setUpdateReady(false)} className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500">
+              稍后
+            </button>
+            <button type="button" onClick={clearAppCache} className="rounded-md border border-sky-200 px-2 py-1 text-xs font-semibold text-harbor">
+              清缓存
+            </button>
+            <button type="button" onClick={refreshToLatestVersion} className="rounded-md bg-harbor px-2 py-1 text-xs font-semibold text-white">
+              刷新
+            </button>
+          </div>
         </div>
       ) : null}
       {renderPage()}

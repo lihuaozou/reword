@@ -1,237 +1,102 @@
 # Supabase 登录和云同步配置
 
-前端只使用 Supabase anon key。不要把 service role key 写入前端代码。
-
-## 环境变量
-
-复制 `.env.example` 为 `.env.local`：
-
-```bash
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-GitHub Pages 部署时，也需要在构建环境提供这两个变量。未配置时，应用会继续以本地游客模式运行，云同步按钮会显示为未配置。
-
-## Auth
-
-在 Supabase Dashboard 开启 Email + Password 登录。第一版登录使用邮箱 + 密码；注册时额外填写 username，并写入 `profiles` 表。
-
-如果开启邮箱验证，用户注册后需要先验证邮箱再登录。测试阶段可以暂时关闭邮箱验证。
+前端只使用 Supabase anon key。不要把 service role key 写入前端代码，也不要自己保存明文密码。
 
 官方参考：
 
 - Supabase JavaScript Auth: https://supabase.com/docs/reference/javascript/auth-signup
 - Supabase Row Level Security: https://supabase.com/docs/guides/database/postgres/row-level-security
 
-## SQL
+## 1. 创建 Supabase 项目
 
-在 Supabase SQL Editor 执行下面脚本。
+1. 打开 https://supabase.com/ 并新建项目。
+2. 进入 Project Settings -> API。
+3. 复制 `Project URL`。
+4. 复制 `anon public` key。
+5. 不要复制或暴露 `service_role` key。
 
-```sql
-create extension if not exists "pgcrypto";
+## 2. 本地环境变量
 
-create table if not exists public.profiles (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  username text not null unique,
-  display_name text,
-  avatar_url text,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique(user_id)
-);
+复制 `.env.example` 为 `.env.local`：
 
-create table if not exists public.word_progress (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  word_id text not null,
-  unit_id text,
-  stage int not null default 0,
-  first_learned_at timestamptz,
-  last_reviewed_at timestamptz,
-  next_review_at timestamptz,
-  known_count int not null default 0,
-  fuzzy_count int not null default 0,
-  forgotten_count int not null default 0,
-  correct_count int not null default 0,
-  wrong_count int not null default 0,
-  monster_hp int,
-  is_mastered boolean not null default false,
-  raw_progress jsonb not null default '{}'::jsonb,
-  updated_at timestamptz not null default now(),
-  unique(user_id, word_id)
-);
-
-create table if not exists public.review_history (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  word_id text not null,
-  unit_id text,
-  action text not null,
-  old_stage int,
-  new_stage int,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.study_sessions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  mode text not null,
-  unit_id text,
-  started_at timestamptz not null,
-  ended_at timestamptz not null,
-  duration_seconds int not null default 0,
-  word_count int not null default 0,
-  correct_count int,
-  wrong_count int,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.checkins (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  date date not null,
-  type text not null check (type in ('signin', 'checkin')),
-  streak_day int not null default 1,
-  reward_xp int not null default 0,
-  reward_coins int not null default 0,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.user_stats (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null unique references auth.users(id) on delete cascade,
-  total_study_days int not null default 0,
-  current_streak int not null default 0,
-  longest_streak int not null default 0,
-  total_study_minutes int not null default 0,
-  total_words_learned int not null default 0,
-  total_words_reviewed int not null default 0,
-  total_quiz_count int not null default 0,
-  total_correct_count int not null default 0,
-  total_wrong_count int not null default 0,
-  total_xp int not null default 0,
-  level int not null default 1,
-  coins int not null default 0,
-  diamonds int not null default 0,
-  monster_points int not null default 0,
-  defeated_monsters int not null default 0,
-  raw_stats jsonb not null default '{}'::jsonb,
-  updated_at timestamptz not null default now()
-);
-
-create table if not exists public.user_settings (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null unique references auth.users(id) on delete cascade,
-  default_accent text not null default 'us',
-  auto_play_on_study boolean not null default false,
-  auto_play_on_recall boolean not null default false,
-  speech_rate numeric not null default 0.9,
-  repeat_count int not null default 1,
-  theme text not null default 'theme-default',
-  updated_at timestamptz not null default now()
-);
-
-create table if not exists public.rewards (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  type text not null,
-  title text not null,
-  description text,
-  xp int not null default 0,
-  coins int not null default 0,
-  diamonds int not null default 0,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.achievements (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  achievement_id text not null,
-  unlocked_at timestamptz not null default now()
-);
-
-create table if not exists public.inventory (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  item_id text not null,
-  count int not null default 1,
-  obtained_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create index if not exists idx_word_progress_user_word on public.word_progress(user_id, word_id);
-create index if not exists idx_review_history_user on public.review_history(user_id, created_at desc);
-create index if not exists idx_study_sessions_user on public.study_sessions(user_id, started_at desc);
-create index if not exists idx_checkins_user_date on public.checkins(user_id, date desc);
-
-alter table public.profiles enable row level security;
-alter table public.word_progress enable row level security;
-alter table public.review_history enable row level security;
-alter table public.study_sessions enable row level security;
-alter table public.checkins enable row level security;
-alter table public.user_stats enable row level security;
-alter table public.user_settings enable row level security;
-alter table public.rewards enable row level security;
-alter table public.achievements enable row level security;
-alter table public.inventory enable row level security;
-
-create policy "profiles_select_own" on public.profiles for select using (user_id = auth.uid());
-create policy "profiles_insert_own" on public.profiles for insert with check (user_id = auth.uid());
-create policy "profiles_update_own" on public.profiles for update using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "profiles_delete_own" on public.profiles for delete using (user_id = auth.uid());
-
-create policy "word_progress_select_own" on public.word_progress for select using (user_id = auth.uid());
-create policy "word_progress_insert_own" on public.word_progress for insert with check (user_id = auth.uid());
-create policy "word_progress_update_own" on public.word_progress for update using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "word_progress_delete_own" on public.word_progress for delete using (user_id = auth.uid());
-
-create policy "review_history_select_own" on public.review_history for select using (user_id = auth.uid());
-create policy "review_history_insert_own" on public.review_history for insert with check (user_id = auth.uid());
-create policy "review_history_update_own" on public.review_history for update using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "review_history_delete_own" on public.review_history for delete using (user_id = auth.uid());
-
-create policy "study_sessions_select_own" on public.study_sessions for select using (user_id = auth.uid());
-create policy "study_sessions_insert_own" on public.study_sessions for insert with check (user_id = auth.uid());
-create policy "study_sessions_update_own" on public.study_sessions for update using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "study_sessions_delete_own" on public.study_sessions for delete using (user_id = auth.uid());
-
-create policy "checkins_select_own" on public.checkins for select using (user_id = auth.uid());
-create policy "checkins_insert_own" on public.checkins for insert with check (user_id = auth.uid());
-create policy "checkins_update_own" on public.checkins for update using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "checkins_delete_own" on public.checkins for delete using (user_id = auth.uid());
-
-create policy "user_stats_select_own" on public.user_stats for select using (user_id = auth.uid());
-create policy "user_stats_insert_own" on public.user_stats for insert with check (user_id = auth.uid());
-create policy "user_stats_update_own" on public.user_stats for update using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "user_stats_delete_own" on public.user_stats for delete using (user_id = auth.uid());
-
-create policy "user_settings_select_own" on public.user_settings for select using (user_id = auth.uid());
-create policy "user_settings_insert_own" on public.user_settings for insert with check (user_id = auth.uid());
-create policy "user_settings_update_own" on public.user_settings for update using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "user_settings_delete_own" on public.user_settings for delete using (user_id = auth.uid());
-
-create policy "rewards_select_own" on public.rewards for select using (user_id = auth.uid());
-create policy "rewards_insert_own" on public.rewards for insert with check (user_id = auth.uid());
-create policy "rewards_update_own" on public.rewards for update using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "rewards_delete_own" on public.rewards for delete using (user_id = auth.uid());
-
-create policy "achievements_select_own" on public.achievements for select using (user_id = auth.uid());
-create policy "achievements_insert_own" on public.achievements for insert with check (user_id = auth.uid());
-create policy "achievements_update_own" on public.achievements for update using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "achievements_delete_own" on public.achievements for delete using (user_id = auth.uid());
-
-create policy "inventory_select_own" on public.inventory for select using (user_id = auth.uid());
-create policy "inventory_insert_own" on public.inventory for insert with check (user_id = auth.uid());
-create policy "inventory_update_own" on public.inventory for update using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "inventory_delete_own" on public.inventory for delete using (user_id = auth.uid());
+```bash
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-## 同步策略
+未配置时，应用会显示“云同步未配置，本地模式可用”，所有学习功能继续使用 localStorage。
 
-- 未登录：只读写 localStorage。
-- 登录后：进入“云同步”页选择上传本地、下载云端或合并。
-- 日常学习动作：本地立即保存，然后触发云端同步。
-- 离线时：先写入本地，并写入 pending sync queue；网络恢复后自动尝试上传。
-- 冲突处理：单词进度按更新时间较新的记录保留；统计类数值取较大值或合并数组；复习记录和学习 session 追加合并。
+## 3. GitHub Pages Secrets
+
+仓库页面进入 Settings -> Secrets and variables -> Actions -> New repository secret，新增：
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
+
+当前 workflow 文件是 `.github/workflows/deploy.yml`。它会在 `npm run build` 时把 Secrets 注入 Vite：
+
+```yaml
+env:
+  VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+  VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+```
+
+## 4. Auth 设置
+
+在 Supabase Dashboard -> Authentication -> Providers 中启用 Email。
+
+第一版支持：
+
+- 注册：username + email + password
+- 登录：email + password
+- 退出登录
+- 游客本地模式
+
+如果开启邮箱验证，用户注册后需要先验证邮箱再登录。测试阶段可以暂时关闭邮箱验证。
+
+## 5. 数据库 SQL
+
+在 Supabase SQL Editor 里复制并执行：
+
+```text
+supabase/schema.sql
+```
+
+这个文件包含：
+
+- `profiles`
+- `user_stats`
+- `word_progress`
+- `review_history`
+- `study_sessions`
+- `checkins`
+- `rewards`
+- `achievements`
+- `inventory`
+- `user_settings`
+- `sync_queue`
+
+所有表都启用了 Row Level Security，策略均限制 `user_id = auth.uid()`，用户只能读写自己的学习进度、金币、等级、错题、打卡和同步队列。
+
+关键约束：
+
+- `profiles.username` 唯一
+- `word_progress(user_id, word_id)` 唯一
+- `checkins(user_id, date, type)` 唯一
+- `achievements(user_id, achievement_id)` 唯一
+- `inventory(user_id, item_id)` 唯一
+
+## 6. 验证
+
+1. 本地填写 `.env.local`。
+2. 执行 `npm run dev`。
+3. 打开账号同步页。
+4. 注册账号。
+5. 登录账号。
+6. 学一个单词或完成一次复习。
+7. 点击账号同步，手动上传或合并。
+8. 换浏览器登录同一账号，下载云端数据。
+
+同步失败不会删除本地数据；离线时会先写入 localStorage 和 pending sync queue，网络恢复后再尝试上传。

@@ -214,7 +214,7 @@ function mergeStats(local: UserStats, cloud: UserStats): UserStats {
       const cloudItem = cloud.inventory.find((value) => value.itemId === item.itemId);
       return {
         ...item,
-        count: Math.max(localItem?.count || 0, cloudItem?.count || 0),
+        count: (localItem?.count || 0) + (cloudItem?.count || 0),
         obtainedAt: [localItem?.obtainedAt, cloudItem?.obtainedAt].filter(Boolean).sort()[0] || item.obtainedAt,
       };
     }),
