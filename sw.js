@@ -1,7 +1,7 @@
-const CACHE_NAME = "reword-cache-v3";
+const CACHE_NAME = "reword-cache-v4";
 const BASE_PATH = new URL(self.registration.scope).pathname;
 const withBase = (path) => `${BASE_PATH}${path}`.replace(/\/{2,}/g, "/");
-const APP_SHELL = [withBase(""), withBase("manifest.json"), withBase("icons/icon-192.png"), withBase("icons/icon-512.png")];
+const APP_SHELL = [withBase(""), withBase("offline.html"), withBase("manifest.json"), withBase("icons/icon-192.png"), withBase("icons/icon-512.png")];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
@@ -34,7 +34,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(withBase(""), copy));
           return response;
         })
-        .catch(() => caches.match(withBase("")))
+        .catch(() => caches.match(withBase("")).then((cached) => cached || caches.match(withBase("offline.html"))))
     );
     return;
   }
@@ -48,7 +48,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         }
         return response;
-      });
+      }).catch(() => caches.match(withBase("offline.html")));
     })
   );
 });
