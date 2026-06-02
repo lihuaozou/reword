@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getSupabaseDisabledMessage, isSupabaseConfigured } from "../lib/supabase";
+import { getSupabaseLocalModeMessage, isSupabaseConfigured } from "../lib/supabase";
 import type { PendingSyncItem, ProgressMap, SyncMode, SyncSnapshot, SyncState, UserStats } from "../types";
 import {
   enqueuePendingSync,
@@ -29,7 +29,7 @@ type CloudSyncStatus = {
   needsFirstSyncChoice: boolean;
 };
 
-const disabledMessage = getSupabaseDisabledMessage();
+const localModeMessage = getSupabaseLocalModeMessage();
 
 export function useCloudSync({ userId, progressMap, userStats, onApplySnapshot }: CloudSyncOptions) {
   const { online } = useSyncStatus();
@@ -41,7 +41,7 @@ export function useCloudSync({ userId, progressMap, userStats, onApplySnapshot }
     configured: isSupabaseConfigured,
     online,
     state: isSupabaseConfigured ? "idle" : "disabled",
-    message: isSupabaseConfigured ? "本地模式" : disabledMessage,
+    message: isSupabaseConfigured ? "登录后可同步" : localModeMessage,
     lastSyncAt: metadata.lastSyncAt,
     pendingCount: getPendingSyncQueue().length,
     needsFirstSyncChoice: false,
@@ -74,7 +74,7 @@ export function useCloudSync({ userId, progressMap, userStats, onApplySnapshot }
   const syncNow = useCallback(
     async (mode: SyncMode) => {
       if (!isSupabaseConfigured) {
-        refreshStatus({ state: "disabled", message: disabledMessage });
+        refreshStatus({ state: "disabled", message: localModeMessage });
         return null;
       }
       if (!userId) {
@@ -87,7 +87,7 @@ export function useCloudSync({ userId, progressMap, userStats, onApplySnapshot }
         return null;
       }
 
-      refreshStatus({ state: "syncing", message: "正在同步..." });
+      refreshStatus({ state: "syncing", message: "同步中" });
       try {
         const snapshot = await runCloudSync(userId, mode, snapshotRef.current);
         onApplySnapshot(snapshot);
@@ -109,7 +109,7 @@ export function useCloudSync({ userId, progressMap, userStats, onApplySnapshot }
   const queueLocalChange = useCallback(
     (type: PendingSyncItem["type"], payload: unknown = {}) => {
       if (!isSupabaseConfigured) {
-        refreshStatus({ state: "disabled", message: disabledMessage });
+        refreshStatus({ state: "disabled", message: localModeMessage });
         return;
       }
       if (!userId) {
@@ -132,7 +132,7 @@ export function useCloudSync({ userId, progressMap, userStats, onApplySnapshot }
   useEffect(() => {
     refreshStatus({
       state: !isSupabaseConfigured ? "disabled" : online ? (status.state === "offline" ? "idle" : status.state) : "offline",
-      message: !isSupabaseConfigured ? disabledMessage : online ? status.message : "离线模式",
+      message: !isSupabaseConfigured ? localModeMessage : online ? status.message : "离线模式",
     });
   }, [online]);
 

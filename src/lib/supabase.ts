@@ -42,9 +42,16 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
     })
   : null;
 
+export function getSupabaseLocalModeMessage() {
+  return "当前为本地模式，学习数据仅保存在本设备。";
+}
+
+export function getSupabaseSetupDetail() {
+  return "线上包没有读取到 Supabase 环境变量。请在 GitHub Secrets 中配置 VITE_SUPABASE_URL 和 VITE_SUPABASE_ANON_KEY，然后重新运行 Deploy GitHub Pages。";
+}
+
 export function getSupabaseDisabledMessage() {
-  const missing = supabaseConfig.missingKeys.join(" / ") || "Supabase 环境变量";
-  return `云同步未接通：当前线上包没有读取到 ${missing}。请在 GitHub 仓库 Secrets 配置 Supabase，并重新运行 Deploy GitHub Pages。本地学习数据仍会保存在当前设备。`;
+  return `${getSupabaseSetupDetail()}本地学习数据仍会保存在当前设备。`;
 }
 
 export function requireSupabase() {

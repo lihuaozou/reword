@@ -1,111 +1,67 @@
 # 先做这个：Supabase 云同步配置
 
-线上如果显示“云同步未接通”，说明 GitHub Pages 构建时没有拿到 Supabase 环境变量。网页仍能本地背单词，但登录、注册、跨设备同步不会启用。
+线上如果显示“本地模式”或“Supabase URL 缺失”，说明 GitHub Pages 构建时没有读取到 Supabase 环境变量。网页仍然可以本地背单词，但登录、注册和跨设备同步不会启用。
 
-## 1. 创建 Supabase 项目
+## 傻瓜式步骤
 
-打开 Supabase，创建一个项目。进入项目后找到：
+1. 打开 Supabase 官网。
+2. 创建一个 Supabase 项目。
+3. 进入 `Project Settings -> API`。
+4. 复制 `Project URL`。
+5. 复制 `anon public key`。
+6. 打开 GitHub 仓库 `lihuaozou/reword`。
+7. 进入 `Settings -> Secrets and variables -> Actions -> New repository secret`。
+8. 新增 Secret：`VITE_SUPABASE_URL`，值填 Supabase `Project URL`。
+9. 新增 Secret：`VITE_SUPABASE_ANON_KEY`，值填 Supabase `anon public key`。
+10. 打开 Supabase `SQL Editor`。
+11. 复制仓库里的 `supabase/schema.sql` 全部内容。
+12. 粘贴到 SQL Editor 并执行。
+13. 回到 GitHub 仓库。
+14. 进入 `Actions`。
+15. 手动运行 `Deploy GitHub Pages`。
+16. 部署完成后打开 `https://lihuaozou.github.io/reword/`。
+17. 进入“我的 -> 账号同步”或“设置 -> 云同步配置”。
+18. 看到“云同步已配置”后，再注册或登录账号。
 
-```text
-Project Settings -> API
-```
-
-复制：
-
-```text
-Project URL
-anon public key
-```
-
-不要复制 service role key 到前端。
-
-## 2. 建表
-
-打开 Supabase：
-
-```text
-SQL Editor -> New query
-```
-
-复制并运行仓库里的 SQL：
+## GitHub Secrets 名字必须完全一致
 
 ```text
-supabase/schema.sql
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
 ```
 
-这一步会创建用户资料、学习进度、学习统计等表，并启用 RLS。
-
-## 3. 配置 GitHub Actions Secrets
-
-打开仓库：
+不要写成：
 
 ```text
-https://github.com/lihuaozou/reword
+SUPABASE_URL
+SUPABASE_ANON_KEY
+VITE_SUPABASE_KEY
 ```
 
-进入：
+Vite 只会把 `VITE_` 开头的环境变量注入前端。
 
-```text
-Settings -> Secrets and variables -> Actions -> Repository secrets
-```
+## 不要使用 service role key
 
-新增两个 secret：
+前端只能使用 Supabase `anon public key`。不要把 `service_role` key 放进：
 
-```text
-VITE_SUPABASE_URL=你的 Supabase Project URL
-VITE_SUPABASE_ANON_KEY=你的 Supabase anon public key
-```
+- 代码仓库
+- `.env`
+- GitHub Secrets 给前端构建
+- 网页
 
-## 4. 重新部署网页
+用户数据安全依靠 Supabase RLS。`supabase/schema.sql` 里已经启用了用户只能访问自己数据的策略。
 
-打开：
+## 为什么配置后还显示本地模式
 
-```text
-Actions -> Deploy GitHub Pages -> Run workflow
-```
-
-或直接推送一次 `main`。
-
-部署完成后打开：
-
-```text
-https://lihuaozou.github.io/reword/
-```
-
-进入“设置”或“账号与云同步”，检查：
-
-- Supabase URL：已读取
-- Supabase anon key：已读取
-- 客户端：在线
-- 登录状态：未登录或已登录
-- 同步状态：登录后可同步
-
-## 5. 注册和同步
-
-配置完成后：
-
-1. 打开“账号与云同步”。
-2. 注册账号。
-3. 登录账号。
-4. 首次同步时选择上传本地、下载云端或合并。
-
-如果注册后无法登录，检查 Supabase Auth 是否开启了邮箱验证。开启邮箱验证时，需要先去邮箱点击验证链接。
-
-## 常见问题
-
-### 为什么线上还是说未接通？
-
-通常是这三个原因：
+通常是以下原因：
 
 - GitHub Secrets 没填。
-- Secrets 名字填错了，必须是 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY`。
+- Secrets 名字填错。
 - 填完 Secrets 后没有重新运行 `Deploy GitHub Pages`。
+- GitHub Pages 还在等待部署完成。
+- 浏览器或 PWA 缓存仍是旧版本，可以刷新或清理缓存。
 
-### 为什么不能把 service role key 放进去？
-
-service role key 权限太高，只能放在后端服务器。这个项目是前端静态站，只能使用 Supabase anon public key，并依靠 RLS 限制用户只能访问自己的数据。
-
-### 本地开发怎么测试？
+## 本地开发测试
 
 在仓库根目录新建 `.env.local`：
 
@@ -119,3 +75,5 @@ VITE_SUPABASE_ANON_KEY=你的 Supabase anon public key
 ```bash
 npm run dev
 ```
+
+本地页面进入“设置 -> 云同步配置”，看到 URL 和 anon key 都是“已读取”即可。

@@ -1,7 +1,9 @@
-import { CheckCircle2, CloudOff, Database, KeyRound, LogIn, RefreshCw, Wifi, type LucideIcon } from "lucide-react";
+import { CheckCircle2, CloudOff, Database, ExternalLink, KeyRound, LogIn, RefreshCw, Wifi, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { supabaseConfig } from "../../lib/supabase";
+import { getSupabaseSetupDetail, supabaseConfig } from "../../lib/supabase";
 import type { SyncState } from "../../types";
+
+const SUPABASE_DOC_URL = "https://github.com/lihuaozou/reword/blob/main/docs/DO_THIS_FIRST_SUPABASE.md";
 
 type CloudConfigStatusCardProps = {
   online: boolean;
@@ -40,20 +42,22 @@ function StatusRow({ icon: Icon, label, children }: { icon: LucideIcon; label: s
 
 function syncStateLabel(state: SyncState) {
   if (state === "syncing") return "同步中";
-  if (state === "success") return "成功";
+  if (state === "success") return "已同步";
   if (state === "offline") return "离线";
-  if (state === "error") return "失败";
+  if (state === "error") return "同步失败";
   if (state === "disabled") return "未启用";
-  return "待同步";
+  return "待登录";
 }
 
 export function CloudConfigStatusCard({ online, loggedIn, syncState, syncMessage, lastSyncAt, pendingCount = 0, compact = false }: CloudConfigStatusCardProps) {
   const configured = supabaseConfig.clientEnabled;
   const summary = !configured
-    ? "云同步未接通：当前线上包没有读取到 Supabase URL 或 anon key。请在 GitHub 仓库 Secrets 配置后重新运行 Deploy GitHub Pages。本地学习数据仍会保存在当前设备。"
+    ? getSupabaseSetupDetail()
     : loggedIn
-      ? "已登录，云同步可用。若同步失败，请检查 Supabase 表结构和 RLS。"
-      : "Supabase 已配置。登录或注册后即可把本地学习进度同步到云端。";
+      ? syncState === "error"
+        ? "云同步请求失败，请检查 Supabase 表结构和 RLS。"
+        : "已登录，云同步可用。"
+      : "云同步已配置，请注册或登录账号。";
 
   return (
     <section className={`rounded-lg border border-slate-200 bg-white shadow-soft ${compact ? "p-4" : "p-5"}`}>
@@ -63,12 +67,17 @@ export function CloudConfigStatusCard({ online, loggedIn, syncState, syncMessage
             {configured ? <CheckCircle2 size={18} aria-hidden="true" /> : <CloudOff size={18} aria-hidden="true" />}
             云同步配置
           </div>
-          <h2 className={`${compact ? "mt-1 text-lg" : "mt-2 text-xl"} font-semibold text-ink`}>{configured ? "Supabase 已启用" : "Supabase 未接通"}</h2>
+          <h2 className={`${compact ? "mt-1 text-lg" : "mt-2 text-xl"} font-semibold text-ink`}>{configured ? "云同步已配置" : "本地模式"}</h2>
         </div>
-        <StatusPill ok={configured} text={configured ? "可登录" : "本地模式"} />
+        <StatusPill ok={configured} text={configured ? "可登录" : "未配置"} />
       </div>
 
       <p className="mt-3 text-sm leading-6 text-slate-600">{summary}</p>
+
+      <a href={SUPABASE_DOC_URL} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg border border-sky-200 bg-[#f8fbff] px-3 text-xs font-semibold text-harbor transition hover:border-harbor hover:bg-white">
+        <ExternalLink size={15} aria-hidden="true" />
+        Supabase 配置步骤
+      </a>
 
       <div className={`mt-4 grid gap-2 ${compact ? "" : "sm:grid-cols-2"}`}>
         <StatusRow icon={Database} label="Supabase URL">
@@ -84,8 +93,8 @@ export function CloudConfigStatusCard({ online, loggedIn, syncState, syncMessage
           <StatusPill ok={loggedIn} text={loggedIn ? "已登录" : "未登录"} />
         </StatusRow>
         <StatusRow icon={RefreshCw} label="同步状态">
-          <span className="max-w-[180px] truncate text-right text-xs font-semibold text-slate-600">
-            {syncStateLabel(syncState)} · {syncMessage}
+          <span className="max-w-[180px] truncate text-right text-xs font-semibold text-slate-600" title={syncMessage}>
+            {syncStateLabel(syncState)}
           </span>
         </StatusRow>
         <StatusRow icon={RefreshCw} label="最近同步">

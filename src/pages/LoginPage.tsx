@@ -1,7 +1,6 @@
 import { ArrowLeft, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { LoginForm } from "../components/auth/LoginForm";
-import { getSupabaseDisabledMessage } from "../lib/supabase";
 import { requestPasswordReset } from "../services/authService";
 
 type LoginPageProps = {
@@ -48,7 +47,7 @@ export function LoginPage({ configured, loading, error, onLogin, onSuccess, onRe
           </button>
         </div>
 
-        {!configured ? <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">{getSupabaseDisabledMessage()}</div> : null}
+        {!configured ? <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">请先配置 Supabase 后再登录账号。当前可继续使用本地模式。</div> : null}
 
         {error ? <div className="mb-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div> : null}
         {message ? <div className="mb-4 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</div> : null}

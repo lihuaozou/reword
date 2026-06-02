@@ -8,42 +8,25 @@
 https://lihuaozou.github.io/reword/
 ```
 
-## 1. 本次交付重点
+## 当前状态
 
-- 首页、我的、账号、设置页已加入 Android APK 下载入口。
-- APK 下载固定指向 GitHub Release：`latest-apk / reword-debug.apk`。
-- 账号页和设置页已加入 Supabase 配置检测：URL、anon key、client、登录状态、同步状态、最近同步。
-- 登录和注册在 Supabase 未启用时保持可见，但表单/按钮会禁用并显示明确原因。
-- 云同步未配置时，提示从“云同步未配置，本地模式可用”升级为明确交接文案：需要配置 GitHub Actions Secrets 并重新部署。
-- 新增 `docs/DO_THIS_FIRST_SUPABASE.md`，作为 Supabase 首次配置入口。
-- `README.md` 已更新 GitHub Pages、Supabase、APK Release 和 App 外壳说明。
+- 本地背单词功能可用。
+- Supabase 云同步是否可用，取决于 GitHub Actions Secrets 是否已配置。
+- 如果线上显示“本地模式”，说明 Supabase URL 或 anon key 没有被线上包读取到。
+- 如果 Supabase URL 显示“缺失”，通常是 Secrets 未配置、名字填错，或配置后没有重新运行 `Deploy GitHub Pages`。
+- APK 是否可下载，取决于 `Build Android APK` workflow 是否成功生成 `latest-apk` Release。
+- 如果 APK 下载 404，说明 Release 没生成，或 Release assets 里没有 `reword-debug.apk`。
 
-## 2. Supabase 当前状态说明
-
-代码已经支持 Supabase Auth 和云同步，但线上是否可用取决于 GitHub Actions 构建时是否读取到：
-
-```text
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
-```
-
-如果线上仍显示“云同步未接通”，通常不是页面没部署，而是 GitHub 仓库 Secrets 未配置或配置后没有重新运行 `Deploy GitHub Pages`。
-
-需要手动完成：
+## 需要用户手动完成
 
 1. 创建 Supabase 项目。
-2. 运行 `supabase/schema.sql`。
-3. 在 GitHub Actions Secrets 添加 `VITE_SUPABASE_URL`。
-4. 在 GitHub Actions Secrets 添加 `VITE_SUPABASE_ANON_KEY`。
-5. 重新运行 `Deploy GitHub Pages`。
+2. 在 Supabase SQL Editor 执行 `supabase/schema.sql`。
+3. 在 GitHub Actions Secrets 配置 `VITE_SUPABASE_URL`。
+4. 在 GitHub Actions Secrets 配置 `VITE_SUPABASE_ANON_KEY`。
+5. 手动运行 `Deploy GitHub Pages`。
+6. 手动运行 `Build Android APK`。
 
-详细步骤见：
-
-```text
-docs/DO_THIS_FIRST_SUPABASE.md
-```
-
-## 3. GitHub Pages workflow
+## GitHub Pages Workflow
 
 文件：
 
@@ -51,17 +34,24 @@ docs/DO_THIS_FIRST_SUPABASE.md
 .github/workflows/deploy.yml
 ```
 
-功能：
+状态：
 
-- 推送 `main` 自动构建。
-- 支持手动运行。
+- 标准多行 YAML。
+- 支持 push main 自动运行。
+- 支持 workflow_dispatch 手动运行。
 - 使用 Node 22。
 - 执行 `npm ci`。
 - 执行 `npm run build`。
-- 从 GitHub Secrets 注入 Supabase 环境变量。
-- 将 `dist/` 推送到 `gh-pages` 分支。
+- 构建时注入 GitHub Secrets：
 
-## 4. Android APK workflow
+```yaml
+VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+```
+
+Secrets 没配置时，构建仍然成功，网页降级为本地模式。
+
+## Android APK Workflow
 
 文件：
 
@@ -69,31 +59,41 @@ docs/DO_THIS_FIRST_SUPABASE.md
 .github/workflows/build-android-apk.yml
 ```
 
-功能：
+状态：
 
-- 支持手动运行。
+- 标准多行 YAML。
+- 支持 workflow_dispatch 手动运行。
 - 使用 Node 22、JDK 17、Android SDK。
-- 构建网页包。
-- 如果没有 `android/` 目录，会运行 `npx cap add android`。
-- 运行 `npx cap sync android`。
-- 生成 debug APK：`android/app/build/outputs/apk/debug/app-debug.apk`。
+- 如果 `android/` 目录不存在，会在 CI 中执行 `npx cap add android`。
+- 执行 `npx cap sync android`。
+- 执行 `./gradlew assembleDebug`。
+- 生成 `android/app/build/outputs/apk/debug/app-debug.apk`。
+- 复制为 `reword-debug.apk`。
 - 上传 artifact：`reword-debug-apk`。
-- 创建或更新 GitHub Release：`latest-apk`。
-- 上传下载文件：`reword-debug.apk`。
+- 创建或覆盖上传 GitHub Release asset：
 
-网页下载入口：
+```text
+tag: latest-apk
+release name: Reword Android APK
+asset: reword-debug.apk
+```
+
+最终下载地址：
 
 ```text
 https://github.com/lihuaozou/reword/releases/download/latest-apk/reword-debug.apk
 ```
 
-如果链接不存在，先运行：
+## 页面提示调整
 
-```text
-Actions -> Build Android APK -> Run workflow
-```
+- 首页顶部只显示短状态，不重复长说明。
+- 我的页顶部只显示短状态，不重复长说明。
+- 详细 Supabase 配置说明只放在“云同步配置”卡片里。
+- 设置页和账号页显示详细检测项：Supabase URL、anon key、客户端、登录状态、同步状态、最近同步。
+- Android 下载区会检测 GitHub Release；未检测到 `reword-debug.apk` 时禁用“下载 APK”，避免直接点进 404。
+- Android 下载区提供“打开 Actions 构建”“查看 Releases”“查看安装说明”。
 
-## 5. Capacitor 配置检查
+## Capacitor 配置
 
 文件：
 
@@ -101,26 +101,20 @@ Actions -> Build Android APK -> Run workflow
 capacitor.config.ts
 ```
 
-当前配置加载在线网页：
+当前方案：
 
 ```text
-https://lihuaozou.github.io/reword/
+APK WebView 加载在线网页：https://lihuaozou.github.io/reword/
 ```
 
 因此：
 
-- 改网页内容、文案、UI、单词数据：重新部署 GitHub Pages 即可。
-- 改图标、包名、原生功能、推送、启动页：需要重新构建 APK。
+- 网页内容更新不需要重新打包 APK。
+- 改图标、包名、权限、推送、启动页，需要重新打包 APK。
 
-## 6. 仍需人工处理
+## 本地验证
 
-- Supabase 后台项目、SQL 和 GitHub Secrets 无法由本地代码自动完成。
-- APK Release 需要 `Build Android APK` workflow 至少成功运行一次后才会存在。
-- Debug APK 适合测试安装；正式上架应用市场需要 release 签名 APK/AAB。
-
-## 7. 本地验证
-
-本次已运行：
+本次已重新运行：
 
 ```text
 cmd /c npm run build
@@ -131,10 +125,8 @@ cmd /c npm run build
 构建输出摘要：
 
 ```text
-tsc -b && vite build
 1710 modules transformed
-dist/index.html
-dist/assets/index-BAPFqWCP.css
-dist/assets/index-DB2mgqku.js
-Injected service worker cache version: 20260602152815
+dist/assets/index-gMvuEq6E.css
+dist/assets/index-McG6XLoi.js
+Injected service worker cache version: 20260602161054
 ```
