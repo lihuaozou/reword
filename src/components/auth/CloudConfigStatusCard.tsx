@@ -55,7 +55,7 @@ export function CloudConfigStatusCard({ online, loggedIn, syncState, syncMessage
     ? getSupabaseSetupDetail()
     : loggedIn
       ? syncState === "error"
-        ? "云同步请求失败，请检查 Supabase 表结构和 RLS。"
+        ? "云同步请求失败，请检查 Supabase 表结构、RLS 策略和当前登录状态。"
         : "已登录，云同步可用。"
       : "云同步已配置，请注册或登录账号。";
 
@@ -73,6 +73,12 @@ export function CloudConfigStatusCard({ online, loggedIn, syncState, syncMessage
       </div>
 
       <p className="mt-3 text-sm leading-6 text-slate-600">{summary}</p>
+
+      {!configured ? (
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+          线上仍显示 URL/key 缺失时，通常只有两个原因：GitHub Secrets 没配置，或配置后没有重新运行 Deploy GitHub Pages。注册和登录会在 Supabase 配好后自动启用。
+        </div>
+      ) : null}
 
       <a href={SUPABASE_DOC_URL} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg border border-sky-200 bg-[#f8fbff] px-3 text-xs font-semibold text-harbor transition hover:border-harbor hover:bg-white">
         <ExternalLink size={15} aria-hidden="true" />

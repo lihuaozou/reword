@@ -2,7 +2,7 @@
 
 线上如果显示“本地模式”或“Supabase URL 缺失”，说明 GitHub Pages 构建时没有读取到 Supabase 环境变量。网页仍然可以本地背单词，但登录、注册和跨设备同步不会启用。
 
-## 傻瓜式步骤
+## 步骤
 
 1. 打开 Supabase 官网。
 2. 创建一个 Supabase 项目。
@@ -23,7 +23,7 @@
 17. 进入“我的 -> 账号同步”或“设置 -> 云同步配置”。
 18. 看到“云同步已配置”后，再注册或登录账号。
 
-## GitHub Secrets 名字必须完全一致
+## Secrets 名字必须完全一致
 
 ```text
 VITE_SUPABASE_URL
@@ -49,7 +49,7 @@ Vite 只会把 `VITE_` 开头的环境变量注入前端。
 - GitHub Secrets 给前端构建
 - 网页
 
-用户数据安全依靠 Supabase RLS。`supabase/schema.sql` 里已经启用了用户只能访问自己数据的策略。
+用户数据安全依赖 Supabase RLS。`supabase/schema.sql` 已经启用了用户只能访问自己数据的策略。
 
 ## 为什么配置后还显示本地模式
 
@@ -59,7 +59,16 @@ Vite 只会把 `VITE_` 开头的环境变量注入前端。
 - Secrets 名字填错。
 - 填完 Secrets 后没有重新运行 `Deploy GitHub Pages`。
 - GitHub Pages 还在等待部署完成。
-- 浏览器或 PWA 缓存仍是旧版本，可以刷新或清理缓存。
+- 浏览器、PWA 或 App WebView 缓存仍是旧版本，可以刷新或清理缓存。
+
+部署 workflow 里会打印：
+
+```text
+Supabase URL configured: true/false
+Supabase anon key configured: true/false
+```
+
+它只显示是否存在，不会显示密钥值。
 
 ## 本地开发测试
 

@@ -1,9 +1,36 @@
-# build-apk 操作脚本
+# build-apk 操作说明
 
-这个文件是人工执行脚本说明，不会自动打包。打包前必须先安装 JDK、Android SDK 和 Bubblewrap。
+这个文件是人工执行说明，不会自动打包。
+
+当前推荐优先使用 GitHub Actions：
+
+1. 打开仓库 Actions。
+2. 选择 `Build Android APK`。
+3. 点击 `Run workflow`。
+4. 构建成功后下载 artifact `reword-debug-apk`。
+5. 或到 Releases 下载 `latest-apk` 的 `reword-debug.apk`。
+
+如果本地构建 Capacitor WebView APK，需要先安装 JDK 21 和 Android SDK：
 
 ```bash
-java -version
+npm ci
+npm run build
+npx cap add android
+npx cap sync android
+node scripts/check-android-build.mjs --require-android
+cd android
+./gradlew assembleDebug --stacktrace --info
+```
+
+输出位置：
+
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+如果要做 TWA / Bubblewrap 正式方案，需要额外准备 Digital Asset Links、keystore 和签名信息：
+
+```bash
 npm install -g @bubblewrap/cli
 bubblewrap doctor
 bubblewrap init --manifest https://lihuaozou.github.io/reword/manifest.json
@@ -20,20 +47,3 @@ Short name: 考研单词
 Theme color: #6366f1
 Background color: #f8fafc
 ```
-
-构建完成后查找：
-
-```text
-app-release-signed.apk
-app-release-bundle.aab
-```
-
-APK 可以直接发到安卓手机安装；AAB 留给以后应用市场。
-
-如果本机还没有 Java/Android SDK，可以先用 GitHub Actions：
-
-1. 打开仓库 Actions。
-2. 选择 `Build Android APK`。
-3. 点击 `Run workflow`。
-4. 下载 artifact `reword-debug-apk`。
-5. 解压得到 `app-debug.apk`。

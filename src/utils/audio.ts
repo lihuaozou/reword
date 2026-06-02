@@ -1,4 +1,5 @@
 import type { AudioAccent, AudioSettings } from "../types";
+import { safeFetchJson } from "./safeFetch";
 
 type DictionaryEntry = {
   phonetics?: Array<{
@@ -115,10 +116,10 @@ function fetchDictionaryAudioUrls(word: string, accent: AudioAccent) {
   const cached = dictionaryAudioCache.get(cacheKey);
   if (cached) return cached;
 
-  const request = fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(normalized)}`)
-    .then(async (response) => {
-      if (!response.ok) return [];
-      const entries = (await response.json()) as DictionaryEntry[];
+  const request = safeFetchJson<DictionaryEntry[]>(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(normalized)}`)
+    .then((result) => {
+      if (!result.ok || !Array.isArray(result.data)) return [];
+      const entries = result.data;
       const urls = entries.flatMap((entry) => entry.phonetics || []).map((phonetic) => normalizeAudioUrl(phonetic.audio || "")).filter(Boolean);
       const unique = Array.from(new Set(urls));
       const preferred = unique.filter((url) => matchesAccent(url, accent));

@@ -7,6 +7,22 @@ type RegisterFormProps = {
   onSubmit: (username: string, email: string, password: string) => Promise<void>;
 };
 
+const USERNAME_PATTERN = /^[\p{Script=Han}A-Za-z0-9_]{2,20}$/u;
+
+function validateUsername(value: string) {
+  const username = value.trim();
+  if (!username) return "请输入用户名。";
+  if (!USERNAME_PATTERN.test(username)) return "用户名需为 2-20 位，只能包含中文、字母、数字或下划线。";
+  return null;
+}
+
+function validateEmail(value: string) {
+  const email = value.trim();
+  if (!email) return "请输入邮箱。";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "请输入正确的邮箱地址。";
+  return null;
+}
+
 export function RegisterForm({ loading = false, onSubmit }: RegisterFormProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -17,6 +33,19 @@ export function RegisterForm({ loading = false, onSubmit }: RegisterFormProps) {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
+
+    const usernameError = validateUsername(username);
+    if (usernameError) {
+      setError(usernameError);
+      return;
+    }
+
+    const emailError = validateEmail(email);
+    if (emailError) {
+      setError(emailError);
+      return;
+    }
+
     if (password.length < 6) {
       setError("密码至少 6 位。");
       return;
@@ -25,6 +54,7 @@ export function RegisterForm({ loading = false, onSubmit }: RegisterFormProps) {
       setError("两次输入的密码不一致。");
       return;
     }
+
     await onSubmit(username.trim(), email.trim(), password);
   };
 
@@ -38,6 +68,8 @@ export function RegisterForm({ loading = false, onSubmit }: RegisterFormProps) {
           onChange={(event) => setUsername(event.target.value)}
           required
           minLength={2}
+          maxLength={20}
+          autoComplete="username"
           className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
           placeholder="例如 kaoyan2027"
         />
