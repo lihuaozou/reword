@@ -1,6 +1,8 @@
 import { BookMarked } from "lucide-react";
 import type { ReactNode } from "react";
-import type { RouteName } from "../types";
+import type { User } from "@supabase/supabase-js";
+import type { RouteName, UserProfile } from "../types";
+import { UserMenu } from "./auth/UserMenu";
 import { DesktopSidebar } from "./layout/DesktopSidebar";
 import { MobileBottomNav } from "./layout/MobileBottomNav";
 import { ResponsiveContainer } from "./layout/ResponsiveContainer";
@@ -9,10 +11,12 @@ import { TabletSidebar } from "./layout/TabletSidebar";
 type AppShellProps = {
   current: RouteName;
   onNavigate: (route: RouteName) => void;
+  user?: User | null;
+  profile?: UserProfile | null;
   children: ReactNode;
 };
 
-export function AppShell({ current, onNavigate, children }: AppShellProps) {
+export function AppShell({ current, onNavigate, user = null, profile = null, children }: AppShellProps) {
   const isLearningRoute = current === "study" || current === "recall" || current === "quiz";
 
   return (
@@ -31,6 +35,7 @@ export function AppShell({ current, onNavigate, children }: AppShellProps) {
               <span className="text-xs text-slate-500">2027考研英语红宝书</span>
             </span>
           </button>
+          <UserMenu user={user} profile={profile} onLogin={() => onNavigate("login")} onAccount={() => onNavigate("account")} />
         </div>
       </header>
 

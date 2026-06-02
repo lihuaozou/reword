@@ -57,6 +57,35 @@ export type WordProgress = {
 
 export type ProgressMap = Record<string, WordProgress>;
 
+export type SyncSnapshot = {
+  progress: ProgressMap;
+  userStats: UserStats;
+  exportedAt: string;
+  schemaVersion: 1;
+};
+
+export type SyncMode = "upload" | "download" | "merge";
+
+export type SyncState = "idle" | "syncing" | "offline" | "error" | "success" | "disabled";
+
+export type PendingSyncItem = {
+  id: string;
+  type: "progress" | "stats" | "settings" | "session" | "manual";
+  payload: unknown;
+  createdAt: string;
+  retryCount: number;
+};
+
+export type UserProfile = {
+  id: string;
+  userId: string;
+  username: string;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type AudioAccent = "us" | "uk";
 
 export type AudioSettings = {
@@ -175,7 +204,11 @@ export type RouteName =
   | "monster"
   | "statistics"
   | "achievements"
-  | "settings";
+  | "settings"
+  | "login"
+  | "register"
+  | "account"
+  | "sync";
 
 export type AppRoute = {
   name: RouteName;

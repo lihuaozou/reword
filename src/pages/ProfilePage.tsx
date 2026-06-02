@@ -1,4 +1,4 @@
-﻿import { Award, BarChart3, CalendarCheck2, Download, Gift, RotateCcw, Settings, ShoppingBag, Upload } from "lucide-react";
+import { Award, BarChart3, CalendarCheck2, Cloud, Download, Gift, RotateCcw, Settings, ShoppingBag, Upload } from "lucide-react";
 import type { ChangeEvent } from "react";
 import type { ProgressMap, UserStats, WordEntry } from "../types";
 import { CoinDisplay } from "../components/CoinDisplay";
@@ -17,6 +17,7 @@ type ProfilePageProps = {
   onNavigateStatistics: () => void;
   onNavigateAchievements: () => void;
   onNavigateSettings: () => void;
+  onNavigateAccount: () => void;
   onExport: () => void;
   onImport: (json: string) => void;
   onReset: () => void;
@@ -32,6 +33,7 @@ export function ProfilePage({
   onNavigateStatistics,
   onNavigateAchievements,
   onNavigateSettings,
+  onNavigateAccount,
   onExport,
   onImport,
   onReset,
@@ -96,6 +98,10 @@ export function ProfilePage({
             <Settings size={20} aria-hidden="true" />
             <span>设置</span>
           </button>
+          <button type="button" onClick={onNavigateAccount} className="mode-card">
+            <Cloud size={20} aria-hidden="true" />
+            <span>账号同步</span>
+          </button>
         </div>
       </section>
 
@@ -120,4 +126,3 @@ export function ProfilePage({
     </div>
   );
 }
-

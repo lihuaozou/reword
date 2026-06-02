@@ -1,10 +1,11 @@
-import { BarChart3, BookCheck, CalendarClock, Flame, Gauge, Gift, LibraryBig, ListChecks, Repeat2, ShoppingBag, Swords, Target, TrendingUp } from "lucide-react";
-import type { ProgressMap, UserStats, WordEntry, WordUnit } from "../types";
+import { BarChart3, BookCheck, CalendarClock, Flame, Gauge, Gift, LibraryBig, ListChecks, LogIn, Repeat2, ShoppingBag, Swords, Target, TrendingUp } from "lucide-react";
+import type { ProgressMap, SyncState, UserStats, WordEntry, WordUnit } from "../types";
 import { CoinDisplay } from "../components/CoinDisplay";
 import { LevelProgress } from "../components/LevelProgress";
 import { ProgressBar } from "../components/ProgressBar";
 import { ReviewTimeline } from "../components/ReviewTimeline";
 import { StatCard } from "../components/StatCard";
+import { SyncStatusBadge } from "../components/auth/SyncStatusBadge";
 import { canCheckIn, getCheckInTasks } from "../utils/checkin";
 import { toLocalDateKey } from "../utils/date";
 import { EXAM_ENGLISH_TARGET, getExamCountdown, getTodayQuote } from "../utils/exam";
@@ -24,6 +25,17 @@ type DashboardPageProps = {
   onNavigateMonster: () => void;
   onNavigateShop: () => void;
   onNavigateStatistics: () => void;
+  onNavigateLogin: () => void;
+  onNavigateAccount: () => void;
+  syncStatus: {
+    configured: boolean;
+    online: boolean;
+    state: SyncState;
+    message: string;
+    lastSyncAt?: string;
+    pendingCount: number;
+    isLoggedIn: boolean;
+  };
 };
 
 export function DashboardPage({
@@ -38,6 +50,9 @@ export function DashboardPage({
   onNavigateMonster,
   onNavigateShop,
   onNavigateStatistics,
+  onNavigateLogin,
+  onNavigateAccount,
+  syncStatus,
 }: DashboardPageProps) {
   const todayStats = calculateTodayStats(words, progressMap);
   const studyStats = getStudyStats(stats);
@@ -78,6 +93,20 @@ export function DashboardPage({
             <button type="button" onClick={onNavigateStatistics} className="rounded-lg border border-sky-100 bg-white/90 px-3 py-2 text-left transition hover:border-harbor hover:text-harbor">
               <span className="block text-xs text-slate-400">今日时长</span>
               <span className="font-semibold text-ink">{formatDuration(studyStats.todaySeconds)}</span>
+            </button>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <SyncStatusBadge
+              configured={syncStatus.configured}
+              online={syncStatus.online}
+              state={syncStatus.state}
+              message={syncStatus.message}
+              lastSyncAt={syncStatus.lastSyncAt}
+              pendingCount={syncStatus.pendingCount}
+            />
+            <button type="button" onClick={syncStatus.isLoggedIn ? onNavigateAccount : onNavigateLogin} className="btn-secondary min-h-8 px-3 py-1.5 text-xs">
+              <LogIn size={15} aria-hidden="true" />
+              {syncStatus.isLoggedIn ? "账号同步" : "登录同步"}
             </button>
           </div>
           <div className="mt-5 flex flex-wrap gap-3">

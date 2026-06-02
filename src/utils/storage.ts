@@ -125,7 +125,7 @@ export function createDefaultUserStats(): UserStats {
   };
 }
 
-function mergeUserStats(stats: Partial<UserStats>): UserStats {
+export function mergeUserStats(stats: Partial<UserStats>): UserStats {
   const defaults = createDefaultUserStats();
   return {
     ...defaults,

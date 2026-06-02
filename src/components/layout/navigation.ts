@@ -3,6 +3,7 @@ import {
   BarChart3,
   BookOpen,
   CalendarCheck2,
+  Cloud,
   ClipboardCheck,
   LibraryBig,
   RefreshCcw,
@@ -40,6 +41,7 @@ export const desktopNavItems: NavItem[] = [
   { route: "statistics", label: "学习统计", icon: BarChart3 },
   { route: "achievements", label: "成就徽章", icon: Award },
   { route: "settings", label: "设置", icon: Settings },
+  { route: "account", label: "账号同步", icon: Cloud },
 ];
 
 export function isRouteActive(current: RouteName, route: RouteName) {

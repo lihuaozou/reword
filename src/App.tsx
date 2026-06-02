@@ -1,25 +1,31 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "./components/AppShell";
 import { RewardToast } from "./components/RewardToast";
+import { AccountPage } from "./pages/AccountPage";
 import { AchievementsPage } from "./pages/AchievementsPage";
 import { CheckInPage } from "./pages/CheckInPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { LoginPage } from "./pages/LoginPage";
 import { MonsterPage } from "./pages/MonsterPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { QuizPage } from "./pages/QuizPage";
 import { RecallPage } from "./pages/RecallPage";
+import { RegisterPage } from "./pages/RegisterPage";
 import { ReviewPage } from "./pages/ReviewPage";
 import { RewardsPage } from "./pages/RewardsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { ShopPage } from "./pages/ShopPage";
 import { StatisticsPage } from "./pages/StatisticsPage";
 import { StudyPage } from "./pages/StudyPage";
+import { SyncPage } from "./pages/SyncPage";
 import { TotalPage } from "./pages/TotalPage";
 import { UnitDetailPage } from "./pages/UnitDetailPage";
 import { UnitsPage } from "./pages/UnitsPage";
 import { StudyTimer } from "./components/StudyTimer";
 import { units, words } from "./data/words";
-import type { AppRoute, AudioSettings, ProgressMap, RewardRecord, RouteName, ShopItem, StudySession, UserStats, WordProgress } from "./types";
+import { useAuth } from "./hooks/useAuth";
+import { useCloudSync } from "./hooks/useCloudSync";
+import type { AppRoute, AudioSettings, ProgressMap, RewardRecord, RouteName, ShopItem, StudySession, SyncSnapshot, UserStats, WordProgress } from "./types";
 import { unlockAvailableAchievements } from "./utils/achievements";
 import { canCheckIn, checkInToday, signInToday } from "./utils/checkin";
 import { getBossStatus } from "./utils/monster";
@@ -53,9 +59,28 @@ export default function App() {
   const [progressMap, setProgressMap] = useState<ProgressMap>(() => getProgress());
   const [userStats, setUserStats] = useState<UserStats>(() => getUserStats());
   const [latestReward, setLatestReward] = useState<RewardRecord | undefined>();
+  const auth = useAuth();
+
+  const applySyncSnapshot = useCallback((snapshot: SyncSnapshot) => {
+    setProgressMap(snapshot.progress);
+    setUserStats(snapshot.userStats);
+  }, []);
+
+  const cloudSync = useCloudSync({
+    userId: auth.user?.id,
+    progressMap,
+    userStats,
+    onApplySnapshot: applySyncSnapshot,
+  });
 
   const selectedUnit = useMemo(() => units.find((unit) => unit.id === route.unitId) || units[0], [route.unitId]);
   const scopeWords = route.unitId ? selectedUnit.words : words;
+
+  useEffect(() => {
+    if (auth.user && cloudSync.needsFirstSyncChoice && route.name !== "sync") {
+      setRoute({ name: "sync" });
+    }
+  }, [auth.user, cloudSync.needsFirstSyncChoice, route.name]);
 
   useEffect(() => {
     if (route.name === "study" || route.name === "recall" || route.name === "quiz") {
@@ -72,6 +97,7 @@ export default function App() {
   const finishStatsUpdate = (current: UserStats, next: UserStats, mapForAchievements = progressMap) => {
     const finalStats = unlockAvailableAchievements(next, words, mapForAchievements);
     saveUserStats(finalStats);
+    cloudSync.queueLocalChange("stats", { source: "stats-update" });
     if (latestRewardChanged(current, finalStats)) setLatestReward(finalStats.rewardHistory[0]);
     return finalStats;
   };
@@ -90,6 +116,7 @@ export default function App() {
       const after = progressUpdater(before);
       const nextMap = { ...current, [wordId]: after };
       saveProgress(nextMap);
+      cloudSync.queueLocalChange("progress", { wordId });
 
       if (statsUpdater) {
         setUserStats((stats) => finishStatsUpdate(stats, statsUpdater(stats, before, after, nextMap), nextMap));
@@ -239,6 +266,7 @@ export default function App() {
       const next = importProgressFromJson(json);
       setProgressMap(next);
       setUserStats(getUserStats());
+      cloudSync.queueLocalChange("manual", { source: "import" });
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "导入失败");
     }
@@ -249,6 +277,7 @@ export default function App() {
     resetAllProgress();
     setProgressMap({});
     setUserStats(getUserStats());
+    cloudSync.queueLocalChange("manual", { source: "reset" });
   };
 
   const handleSessionComplete = useCallback((session: StudySession) => {
@@ -277,10 +306,11 @@ export default function App() {
 
       const finalStats = unlockAvailableAchievements(next, words, getProgress());
       saveUserStats(finalStats);
+      cloudSync.queueLocalChange("session", { sessionId: session.id });
       if (latestRewardChanged(current, finalStats)) setLatestReward(finalStats.rewardHistory[0]);
       return finalStats;
     });
-  }, []);
+  }, [cloudSync.queueLocalChange]);
 
   const handleSignIn = () => {
     updateStats((stats) => signInToday(stats));
@@ -343,6 +373,81 @@ export default function App() {
     route.name === "study" || route.name === "quiz" || route.name === "total" ? route.name : route.name === "recall" ? (route.dueOnly ? "review" : "recall") : undefined;
 
   const renderPage = () => {
+    if (route.name === "login") {
+      return (
+        <LoginPage
+          configured={auth.configured}
+          loading={auth.loading}
+          error={auth.error}
+          onLogin={async (email, password) => {
+            await auth.login(email, password);
+          }}
+          onSuccess={() => setRoute({ name: "sync" })}
+          onRegister={() => setRoute({ name: "register" })}
+          onGuest={() => setRoute({ name: "dashboard" })}
+        />
+      );
+    }
+
+    if (route.name === "register") {
+      return (
+        <RegisterPage
+          configured={auth.configured}
+          loading={auth.loading}
+          error={auth.error}
+          onRegister={async (username, email, password) => {
+            await auth.register(username, email, password);
+          }}
+          onSuccess={() => setRoute({ name: auth.user ? "sync" : "login" })}
+          onLogin={() => setRoute({ name: "login" })}
+        />
+      );
+    }
+
+    if (route.name === "sync") {
+      return (
+        <SyncPage
+          configured={cloudSync.configured}
+          online={cloudSync.online}
+          user={auth.user}
+          state={cloudSync.state}
+          message={cloudSync.message}
+          lastSyncAt={cloudSync.lastSyncAt}
+          pendingCount={cloudSync.pendingCount}
+          onSync={async (mode) => {
+            await cloudSync.syncNow(mode);
+            setRoute({ name: "account" });
+          }}
+          onSkip={() => setRoute({ name: "dashboard" })}
+          onLogin={() => setRoute({ name: "login" })}
+        />
+      );
+    }
+
+    if (route.name === "account") {
+      return (
+        <AccountPage
+          configured={cloudSync.configured}
+          online={cloudSync.online}
+          user={auth.user}
+          profile={auth.profile}
+          state={cloudSync.state}
+          message={cloudSync.message}
+          lastSyncAt={cloudSync.lastSyncAt}
+          pendingCount={cloudSync.pendingCount}
+          onLogin={() => setRoute({ name: "login" })}
+          onRegister={() => setRoute({ name: "register" })}
+          onSync={cloudSync.syncNow}
+          onLogout={async () => {
+            await auth.logout();
+            setRoute({ name: "dashboard" });
+          }}
+          onExport={() => downloadJson(exportProgressToJson())}
+          onImport={importProgress}
+        />
+      );
+    }
+
     if (route.name === "dashboard") {
       return (
         <DashboardPage
@@ -357,6 +462,17 @@ export default function App() {
           onNavigateMonster={() => setRoute({ name: "monster" })}
           onNavigateShop={() => setRoute({ name: "shop" })}
           onNavigateStatistics={() => setRoute({ name: "statistics" })}
+          onNavigateLogin={() => setRoute({ name: "login" })}
+          onNavigateAccount={() => setRoute({ name: "account" })}
+          syncStatus={{
+            configured: cloudSync.configured,
+            online: cloudSync.online,
+            state: cloudSync.state,
+            message: auth.user ? cloudSync.message : cloudSync.configured ? "游客本地模式" : cloudSync.message,
+            lastSyncAt: cloudSync.lastSyncAt,
+            pendingCount: cloudSync.pendingCount,
+            isLoggedIn: Boolean(auth.user),
+          }}
         />
       );
     }
@@ -463,6 +579,7 @@ export default function App() {
         onNavigateStatistics={() => setRoute({ name: "statistics" })}
         onNavigateAchievements={() => setRoute({ name: "achievements" })}
         onNavigateSettings={() => setRoute({ name: "settings" })}
+        onNavigateAccount={() => setRoute({ name: "account" })}
         onExport={() => downloadJson(exportProgressToJson())}
         onImport={importProgress}
         onReset={resetProgress}
@@ -471,7 +588,7 @@ export default function App() {
   };
 
   return (
-    <AppShell current={route.name} onNavigate={navigate}>
+    <AppShell current={route.name} onNavigate={navigate} user={auth.user} profile={auth.profile}>
       {latestReward ? (
         <div className="fixed left-1/2 top-20 z-50 w-[min(92vw,360px)] -translate-x-1/2">
           <RewardToast reward={latestReward} />
