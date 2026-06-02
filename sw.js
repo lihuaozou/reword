@@ -1,4 +1,5 @@
-const CACHE_NAME = "reword-cache-v4";
+const CACHE_VERSION = "75d59a381c2b";
+const CACHE_NAME = `reword-cache-${CACHE_VERSION}`;
 const BASE_PATH = new URL(self.registration.scope).pathname;
 const withBase = (path) => `${BASE_PATH}${path}`.replace(/\/{2,}/g, "/");
 const APP_SHELL = [withBase(""), withBase("offline.html"), withBase("manifest.json"), withBase("icons/icon-192.png"), withBase("icons/icon-512.png")];
