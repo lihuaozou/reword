@@ -67,7 +67,12 @@ export function StudyPage({ unit, words, progressMap, audioSettings, onLearn }: 
             <ArrowLeft size={16} aria-hidden="true" />
             上一个
           </button>
-          <button type="button" onClick={() => onLearn(current.id)} className="btn-primary h-11 min-h-0 px-2 text-xs">
+          <button
+            type="button"
+            onClick={() => onLearn(current.id)}
+            aria-label="标记当前单词已学"
+            className="inline-flex h-11 min-h-0 items-center justify-center gap-1.5 rounded-lg border border-emerald-700 bg-emerald-600 px-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:translate-y-px"
+          >
             <Check size={16} aria-hidden="true" />
             已学
           </button>
