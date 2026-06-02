@@ -1,6 +1,7 @@
 import { BarChart3, BookCheck, CalendarClock, Flame, Gauge, Gift, LibraryBig, ListChecks, LogIn, Repeat2, ShoppingBag, Swords, Target, TrendingUp } from "lucide-react";
 import type { ProgressMap, SyncState, UserStats, WordEntry, WordUnit } from "../types";
 import { CoinDisplay } from "../components/CoinDisplay";
+import { InstallGuideCard } from "../components/InstallGuideCard";
 import { LevelProgress } from "../components/LevelProgress";
 import { ProgressBar } from "../components/ProgressBar";
 import { ReviewTimeline } from "../components/ReviewTimeline";
@@ -147,6 +148,8 @@ export function DashboardPage({
           </div>
         </div>
       </section>
+
+      <InstallGuideCard compact />
 
       <section className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
         <LevelProgress stats={stats} />

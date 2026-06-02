@@ -2,6 +2,7 @@ import { Award, BarChart3, CalendarCheck2, Cloud, Download, Gift, RefreshCcw, Ro
 import type { ChangeEvent } from "react";
 import type { ProgressMap, SyncState, UserStats, WordEntry } from "../types";
 import { CoinDisplay } from "../components/CoinDisplay";
+import { InstallGuideCard } from "../components/InstallGuideCard";
 import { SyncStatusBadge } from "../components/auth/SyncStatusBadge";
 import { LevelProgress } from "../components/LevelProgress";
 import { StatCard } from "../components/StatCard";
@@ -82,6 +83,8 @@ export function ProfilePage({
           </div>
         </div>
       </section>
+
+      <InstallGuideCard compact />
 
       <section className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
         <LevelProgress stats={stats} />

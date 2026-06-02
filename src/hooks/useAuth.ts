@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
-import { getCurrentSession, getProfile, signInWithEmail, signOut, signUpWithEmail } from "../services/authService";
+import { getCurrentSession, getProfile, signInWithEmail, signOut, signUpWithEmail, upsertProfile } from "../services/authService";
 import type { UserProfile } from "../types";
 
 export function useAuth() {
@@ -11,15 +11,19 @@ export function useAuth() {
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [error, setError] = useState<string | null>(null);
 
-  const refreshProfile = useCallback(async (nextUser = user) => {
-    if (!nextUser || !isSupabaseConfigured) {
-      setProfile(null);
-      return null;
-    }
-    const nextProfile = await getProfile(nextUser.id);
-    setProfile(nextProfile);
-    return nextProfile;
-  }, [user]);
+  const refreshProfile = useCallback(
+    async (nextUser = user) => {
+      if (!nextUser || !isSupabaseConfigured) {
+        setProfile(null);
+        return null;
+      }
+      const existing = await getProfile(nextUser.id);
+      const nextProfile = existing || (await upsertProfile(nextUser));
+      setProfile(nextProfile);
+      return nextProfile;
+    },
+    [user]
+  );
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
@@ -57,41 +61,47 @@ export function useAuth() {
     };
   }, [refreshProfile]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await signInWithEmail({ email, password });
-      setSession(data.session);
-      setUser(data.user);
-      if (data.user) await refreshProfile(data.user);
-      return data;
-    } catch (nextError) {
-      const message = nextError instanceof Error ? nextError.message : "登录失败";
-      setError(message);
-      throw nextError;
-    } finally {
-      setLoading(false);
-    }
-  }, [refreshProfile]);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await signInWithEmail({ email, password });
+        setSession(data.session);
+        setUser(data.user);
+        if (data.user) await refreshProfile(data.user);
+        return data;
+      } catch (nextError) {
+        const message = nextError instanceof Error ? nextError.message : "登录失败";
+        setError(message);
+        throw nextError;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [refreshProfile]
+  );
 
-  const register = useCallback(async (username: string, email: string, password: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await signUpWithEmail({ username, email, password });
-      setSession(data.session);
-      setUser(data.user);
-      if (data.user) await refreshProfile(data.user);
-      return data;
-    } catch (nextError) {
-      const message = nextError instanceof Error ? nextError.message : "注册失败";
-      setError(message);
-      throw nextError;
-    } finally {
-      setLoading(false);
-    }
-  }, [refreshProfile]);
+  const register = useCallback(
+    async (username: string, email: string, password: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await signUpWithEmail({ username, email, password });
+        setSession(data.session);
+        setUser(data.user);
+        if (data.user) await refreshProfile(data.user);
+        return data;
+      } catch (nextError) {
+        const message = nextError instanceof Error ? nextError.message : "注册失败";
+        setError(message);
+        throw nextError;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [refreshProfile]
+  );
 
   const logout = useCallback(async () => {
     setLoading(true);

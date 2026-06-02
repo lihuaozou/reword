@@ -594,7 +594,20 @@ export default function App() {
     }
 
     if (route.name === "settings") {
-      return <SettingsPage stats={userStats} onUpdateAudio={handleUpdateAudio} />;
+      return (
+        <SettingsPage
+          stats={userStats}
+          onUpdateAudio={handleUpdateAudio}
+          syncStatus={{
+            online: cloudSync.online,
+            state: cloudSync.state,
+            message: cloudSync.message,
+            lastSyncAt: cloudSync.lastSyncAt,
+            pendingCount: cloudSync.pendingCount,
+            isLoggedIn: Boolean(auth.user),
+          }}
+        />
+      );
     }
 
     return (

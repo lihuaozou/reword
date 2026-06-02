@@ -1,6 +1,21 @@
-﻿import type { AudioAccent, AudioSettings, UserStats } from "../types";
+import type { AudioAccent, AudioSettings, SyncState, UserStats } from "../types";
+import { CloudConfigStatusCard } from "../components/auth/CloudConfigStatusCard";
+import { InstallGuideCard } from "../components/InstallGuideCard";
 
-export function SettingsPage({ stats, onUpdateAudio }: { stats: UserStats; onUpdateAudio: (settings: AudioSettings) => void }) {
+type SettingsPageProps = {
+  stats: UserStats;
+  onUpdateAudio: (settings: AudioSettings) => void;
+  syncStatus: {
+    online: boolean;
+    state: SyncState;
+    message: string;
+    lastSyncAt?: string;
+    pendingCount: number;
+    isLoggedIn: boolean;
+  };
+};
+
+export function SettingsPage({ stats, onUpdateAudio, syncStatus }: SettingsPageProps) {
   const settings = stats.audioSettings;
   const update = (patch: Partial<AudioSettings>) => onUpdateAudio({ ...settings, ...patch });
   return (
@@ -9,6 +24,7 @@ export function SettingsPage({ stats, onUpdateAudio }: { stats: UserStats; onUpd
         <div className="text-xs font-semibold uppercase text-copper">Settings</div>
         <h1 className="mt-1 text-3xl font-semibold text-ink">设置</h1>
       </div>
+
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
         <h2 className="font-semibold text-ink">发音设置</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -45,7 +61,18 @@ export function SettingsPage({ stats, onUpdateAudio }: { stats: UserStats; onUpd
           </label>
         </div>
       </section>
+
+      <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+        <CloudConfigStatusCard
+          online={syncStatus.online}
+          loggedIn={syncStatus.isLoggedIn}
+          syncState={syncStatus.state}
+          syncMessage={syncStatus.message}
+          lastSyncAt={syncStatus.lastSyncAt}
+          pendingCount={syncStatus.pendingCount}
+        />
+        <InstallGuideCard />
+      </div>
     </div>
   );
 }
-

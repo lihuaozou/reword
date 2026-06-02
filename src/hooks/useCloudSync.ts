@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { isSupabaseConfigured } from "../lib/supabase";
+import { getSupabaseDisabledMessage, isSupabaseConfigured } from "../lib/supabase";
 import type { PendingSyncItem, ProgressMap, SyncMode, SyncSnapshot, SyncState, UserStats } from "../types";
 import {
   enqueuePendingSync,
@@ -29,6 +29,8 @@ type CloudSyncStatus = {
   needsFirstSyncChoice: boolean;
 };
 
+const disabledMessage = getSupabaseDisabledMessage();
+
 export function useCloudSync({ userId, progressMap, userStats, onApplySnapshot }: CloudSyncOptions) {
   const { online } = useSyncStatus();
   const snapshotRef = useRef<SyncSnapshot>(getLocalSyncSnapshot());
@@ -39,7 +41,7 @@ export function useCloudSync({ userId, progressMap, userStats, onApplySnapshot }
     configured: isSupabaseConfigured,
     online,
     state: isSupabaseConfigured ? "idle" : "disabled",
-    message: isSupabaseConfigured ? "本地模式" : "云同步未配置，本地模式可用",
+    message: isSupabaseConfigured ? "本地模式" : disabledMessage,
     lastSyncAt: metadata.lastSyncAt,
     pendingCount: getPendingSyncQueue().length,
     needsFirstSyncChoice: false,
@@ -54,70 +56,83 @@ export function useCloudSync({ userId, progressMap, userStats, onApplySnapshot }
     };
   }, [progressMap, userStats]);
 
-  const refreshStatus = useCallback((patch: Partial<CloudSyncStatus> = {}) => {
-    const nextMeta = getSyncMetadata();
-    setStatus((current) => ({
-      ...current,
-      configured: isSupabaseConfigured,
-      online,
-      lastSyncAt: nextMeta.lastSyncAt,
-      pendingCount: getPendingSyncQueue().length,
-      ...patch,
-    }));
-  }, [online]);
+  const refreshStatus = useCallback(
+    (patch: Partial<CloudSyncStatus> = {}) => {
+      const nextMeta = getSyncMetadata();
+      setStatus((current) => ({
+        ...current,
+        configured: isSupabaseConfigured,
+        online,
+        lastSyncAt: nextMeta.lastSyncAt,
+        pendingCount: getPendingSyncQueue().length,
+        ...patch,
+      }));
+    },
+    [online]
+  );
 
-  const syncNow = useCallback(async (mode: SyncMode) => {
-    if (!isSupabaseConfigured) {
-      refreshStatus({ state: "disabled", message: "云同步未配置，本地模式可用" });
-      return null;
-    }
-    if (!userId) {
-      refreshStatus({ state: "idle", message: "登录后可同步" });
-      return null;
-    }
-    if (!online) {
-      enqueuePendingSync("manual", { mode });
-      refreshStatus({ state: "offline", message: "离线中，已加入待同步队列" });
-      return null;
-    }
+  const syncNow = useCallback(
+    async (mode: SyncMode) => {
+      if (!isSupabaseConfigured) {
+        refreshStatus({ state: "disabled", message: disabledMessage });
+        return null;
+      }
+      if (!userId) {
+        refreshStatus({ state: "idle", message: "登录后可同步" });
+        return null;
+      }
+      if (!online) {
+        enqueuePendingSync("manual", { mode });
+        refreshStatus({ state: "offline", message: "离线中，已加入待同步队列" });
+        return null;
+      }
 
-    refreshStatus({ state: "syncing", message: "正在同步..." });
-    try {
-      const snapshot = await runCloudSync(userId, mode, snapshotRef.current);
-      onApplySnapshot(snapshot);
-      refreshStatus({ state: "success", message: mode === "upload" ? "已上传本地进度" : mode === "download" ? "已恢复云端进度" : "已合并本地和云端进度", needsFirstSyncChoice: false });
-      return snapshot;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "同步失败";
-      refreshStatus({ state: "error", message });
-      throw error;
-    }
-  }, [online, onApplySnapshot, refreshStatus, userId]);
+      refreshStatus({ state: "syncing", message: "正在同步..." });
+      try {
+        const snapshot = await runCloudSync(userId, mode, snapshotRef.current);
+        onApplySnapshot(snapshot);
+        refreshStatus({
+          state: "success",
+          message: mode === "upload" ? "已上传本地进度" : mode === "download" ? "已恢复云端进度" : "已合并本地和云端进度",
+          needsFirstSyncChoice: false,
+        });
+        return snapshot;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "同步失败";
+        refreshStatus({ state: "error", message });
+        throw error;
+      }
+    },
+    [online, onApplySnapshot, refreshStatus, userId]
+  );
 
-  const queueLocalChange = useCallback((type: PendingSyncItem["type"], payload: unknown = {}) => {
-    if (!isSupabaseConfigured) {
-      refreshStatus({ state: "disabled", message: "云同步未配置，本地模式可用" });
-      return;
-    }
-    if (!userId) {
-      refreshStatus({ state: "idle", message: "游客本地模式" });
-      return;
-    }
-    if (!online) {
-      enqueuePendingSync(type, payload);
-      refreshStatus({ state: "offline", message: "离线中，已先保存到本地" });
-      return;
-    }
-    window.clearTimeout(timerRef.current);
-    timerRef.current = window.setTimeout(() => {
-      syncNow("upload").catch(() => undefined);
-    }, 900);
-  }, [online, refreshStatus, syncNow, userId]);
+  const queueLocalChange = useCallback(
+    (type: PendingSyncItem["type"], payload: unknown = {}) => {
+      if (!isSupabaseConfigured) {
+        refreshStatus({ state: "disabled", message: disabledMessage });
+        return;
+      }
+      if (!userId) {
+        refreshStatus({ state: "idle", message: "游客本地模式" });
+        return;
+      }
+      if (!online) {
+        enqueuePendingSync(type, payload);
+        refreshStatus({ state: "offline", message: "离线中，已先保存到本地" });
+        return;
+      }
+      window.clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(() => {
+        syncNow("upload").catch(() => undefined);
+      }, 900);
+    },
+    [online, refreshStatus, syncNow, userId]
+  );
 
   useEffect(() => {
     refreshStatus({
-      state: !isSupabaseConfigured ? "disabled" : online ? status.state === "offline" ? "idle" : status.state : "offline",
-      message: !isSupabaseConfigured ? "云同步未配置，本地模式可用" : online ? status.message : "离线模式",
+      state: !isSupabaseConfigured ? "disabled" : online ? (status.state === "offline" ? "idle" : status.state) : "offline",
+      message: !isSupabaseConfigured ? disabledMessage : online ? status.message : "离线模式",
     });
   }, [online]);
 

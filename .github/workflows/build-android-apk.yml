@@ -4,11 +4,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,8 +38,11 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - name: Generate Android project
-        run: npx cap add android
+      - name: Ensure Capacitor Android project
+        run: |
+          if [ ! -d android ]; then
+            npx cap add android
+          fi
 
       - name: Sync Android project
         run: npx cap sync android
@@ -49,8 +53,25 @@ jobs:
           chmod +x ./gradlew
           ./gradlew assembleDebug
 
+      - name: Prepare release APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk reword-debug.apk
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: reword-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            reword-debug.apk
+            android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Publish latest APK release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view latest-apk >/dev/null 2>&1; then
+            gh release upload latest-apk reword-debug.apk --clobber
+          else
+            gh release create latest-apk reword-debug.apk \
+              --title "Reword Android APK" \
+              --notes "Debug APK for direct Android installation. If the app content changes, redeploy GitHub Pages; rebuild this APK only when the native shell changes."
+          fi

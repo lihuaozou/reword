@@ -1,6 +1,8 @@
 import { CloudDownload, CloudUpload, Download, GitMerge, LogOut, Upload } from "lucide-react";
 import type { ChangeEvent } from "react";
 import type { User } from "@supabase/supabase-js";
+import { InstallGuideCard } from "../components/InstallGuideCard";
+import { CloudConfigStatusCard } from "../components/auth/CloudConfigStatusCard";
 import { SyncStatusBadge } from "../components/auth/SyncStatusBadge";
 import type { SyncMode, SyncState, UserProfile } from "../types";
 
@@ -57,18 +59,24 @@ export function AccountPage({
         </div>
       </section>
 
+      <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+        <CloudConfigStatusCard online={online} loggedIn={Boolean(user)} syncState={state} syncMessage={message} lastSyncAt={lastSyncAt} pendingCount={pendingCount} />
+        <InstallGuideCard />
+      </div>
+
       {!user ? (
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
           <h2 className="text-lg font-semibold text-ink">当前是游客模式</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500">学习数据已保存在本地。登录后可以选择上传本地数据、下载云端数据或合并两边数据。</p>
+          <p className="mt-2 text-sm leading-6 text-slate-500">学习数据已保存在本地。Supabase 配置完成后，可以注册或登录账号，再选择上传本地、下载云端或合并两边数据。</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <button type="button" onClick={onLogin} className="btn-primary">
+            <button type="button" onClick={onLogin} disabled={!configured} className="btn-primary disabled:opacity-45">
               登录账号
             </button>
-            <button type="button" onClick={onRegister} className="btn-secondary">
+            <button type="button" onClick={onRegister} disabled={!configured} className="btn-secondary disabled:opacity-45">
               注册账号
             </button>
           </div>
+          {!configured ? <p className="mt-3 text-xs leading-5 text-amber-700">当前线上包未读取到 Supabase 配置，所以登录/注册暂时不可用。</p> : null}
         </section>
       ) : (
         <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">

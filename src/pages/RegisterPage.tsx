@@ -1,6 +1,7 @@
 import { ArrowLeft, LogIn } from "lucide-react";
 import { useState } from "react";
 import { RegisterForm } from "../components/auth/RegisterForm";
+import { getSupabaseDisabledMessage } from "../lib/supabase";
 
 type RegisterPageProps = {
   configured: boolean;
@@ -16,7 +17,7 @@ export function RegisterPage({ configured, loading, error, onRegister, onSuccess
 
   const submit = async (username: string, email: string, password: string) => {
     await onRegister(username, email, password);
-    setMessage("注册成功。如果 Supabase 开启了邮箱验证，请先去邮箱完成验证。");
+    setMessage("注册成功。如果 Supabase 开启了邮箱验证，请先到邮箱完成验证。");
     onSuccess();
   };
 
@@ -33,9 +34,7 @@ export function RegisterPage({ configured, loading, error, onRegister, onSuccess
           </button>
         </div>
 
-        {!configured ? (
-          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">云同步未配置，本地模式可用。配置 Supabase 后即可注册账号。</div>
-        ) : null}
+        {!configured ? <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">{getSupabaseDisabledMessage()}</div> : null}
         {error ? <div className="mb-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div> : null}
         {message ? <div className="mb-4 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</div> : null}
 

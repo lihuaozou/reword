@@ -25,11 +25,11 @@ export function SyncStatusBadge({ configured, online, state, message, lastSyncAt
         : "border-sky-200 bg-sky-50 text-harbor";
 
   return (
-    <span className={`inline-flex min-h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold ${tone}`}>
-      <Icon size={14} className={state === "syncing" ? "animate-spin" : ""} aria-hidden="true" />
-      <span>{message}</span>
-      {pendingCount ? <span>待同步 {pendingCount}</span> : null}
-      <span className="hidden text-slate-500 sm:inline">{formatTime(lastSyncAt)}</span>
+    <span className={`inline-flex max-w-full min-h-8 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold leading-snug ${tone}`}>
+      <Icon size={14} className={`shrink-0 ${state === "syncing" ? "animate-spin" : ""}`} aria-hidden="true" />
+      <span className="min-w-0">{message}</span>
+      {pendingCount ? <span className="shrink-0">待同步 {pendingCount}</span> : null}
+      <span className="hidden shrink-0 text-slate-500 sm:inline">{formatTime(lastSyncAt)}</span>
     </span>
   );
 }
