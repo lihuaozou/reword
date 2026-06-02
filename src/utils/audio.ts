@@ -1,8 +1,16 @@
 import type { AudioAccent, AudioSettings } from "../types";
 
+type DictionaryEntry = {
+  phonetics?: Array<{
+    audio?: string;
+  }>;
+};
+
 let currentAudio: HTMLAudioElement | null = null;
 let voicesReady: Promise<SpeechSynthesisVoice[]> | null = null;
 const missingLocalAudio = new Set<string>();
+const missingRemoteAudio = new Set<string>();
+const dictionaryAudioCache = new Map<string, Promise<string[]>>();
 
 const fallbackSettings: AudioSettings = {
   autoPlayOnStudy: false,
@@ -77,6 +85,63 @@ function getNaturalSpeechRate(rate: AudioSettings["speechRate"]) {
   return rate;
 }
 
+function getStaticDictionaryAudioUrls(word: string, accent: AudioAccent) {
+  const normalized = normalizeWord(word);
+  if (!normalized) return [];
+
+  const variant = accent === "us" ? "us" : "gb";
+  return [
+    `https://ssl.gstatic.com/dictionary/static/sounds/20200429/${normalized}--_${variant}_1.mp3`,
+    `https://ssl.gstatic.com/dictionary/static/sounds/oxford/${normalized}--_${variant}_1.mp3`,
+  ];
+}
+
+function normalizeAudioUrl(url: string) {
+  if (!url) return "";
+  if (url.startsWith("//")) return `https:${url}`;
+  return url;
+}
+
+function matchesAccent(url: string, accent: AudioAccent) {
+  const lower = url.toLowerCase();
+  if (accent === "us") return /[-_]us(?:[-_.]|$)|american|united-states/.test(lower);
+  return /[-_](?:uk|gb)(?:[-_.]|$)|british|united-kingdom/.test(lower);
+}
+
+function fetchDictionaryAudioUrls(word: string, accent: AudioAccent) {
+  const normalized = normalizeWord(word);
+  const cacheKey = `${accent}:${normalized}`;
+  if (!normalized) return Promise.resolve([]);
+  const cached = dictionaryAudioCache.get(cacheKey);
+  if (cached) return cached;
+
+  const request = fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(normalized)}`)
+    .then(async (response) => {
+      if (!response.ok) return [];
+      const entries = (await response.json()) as DictionaryEntry[];
+      const urls = entries.flatMap((entry) => entry.phonetics || []).map((phonetic) => normalizeAudioUrl(phonetic.audio || "")).filter(Boolean);
+      const unique = Array.from(new Set(urls));
+      const preferred = unique.filter((url) => matchesAccent(url, accent));
+      const fallback = unique.filter((url) => !matchesAccent(url, accent));
+      return [...preferred, ...fallback];
+    })
+    .catch(() => []);
+
+  dictionaryAudioCache.set(cacheKey, request);
+  return request;
+}
+
+function playAudioUrl(url: string) {
+  return new Promise<void>((resolve, reject) => {
+    const audio = new Audio(url);
+    currentAudio = audio;
+    audio.preload = "auto";
+    audio.onended = () => resolve();
+    audio.onerror = () => reject(new Error("audio missing"));
+    audio.play().catch(reject);
+  });
+}
+
 export function stopAudio() {
   if (currentAudio) {
     currentAudio.pause();
@@ -87,22 +152,30 @@ export function stopAudio() {
 }
 
 export function playLocalAudio(word: string, accent: AudioAccent) {
-  return new Promise<void>((resolve, reject) => {
-    const key = `${accent}:${normalizeWord(word)}`;
-    if (missingLocalAudio.has(key)) {
-      reject(new Error("local audio missing"));
-      return;
-    }
-    const base = import.meta.env.BASE_URL || "/";
-    const audio = new Audio(`${base}audio/${accent}/${normalizeWord(word)}.mp3`);
-    currentAudio = audio;
-    audio.onended = () => resolve();
-    audio.onerror = () => {
-      missingLocalAudio.add(key);
-      reject(new Error("local audio missing"));
-    };
-    audio.play().catch(reject);
+  const base = import.meta.env.BASE_URL || "/";
+  const url = `${base}audio/${accent}/${normalizeWord(word)}.mp3`;
+  const key = `${accent}:${normalizeWord(word)}`;
+  if (missingLocalAudio.has(key)) return Promise.reject(new Error("local audio missing"));
+  return playAudioUrl(url).catch((error) => {
+    missingLocalAudio.add(key);
+    throw error;
   });
+}
+
+export async function playDictionaryAudio(word: string, accent: AudioAccent) {
+  const urls = [...getStaticDictionaryAudioUrls(word, accent), ...(await fetchDictionaryAudioUrls(word, accent))];
+
+  for (const url of urls) {
+    if (!url || missingRemoteAudio.has(url)) continue;
+    try {
+      await playAudioUrl(url);
+      return;
+    } catch {
+      missingRemoteAudio.add(url);
+    }
+  }
+
+  throw new Error("dictionary audio missing");
 }
 
 export function getBestVoice(accent: AudioAccent) {
@@ -158,6 +231,13 @@ export async function playWordAudio(word: string, accent: AudioAccent, settings:
   stopAudio();
   try {
     await playLocalAudio(word, accent);
+    return;
+  } catch {
+    // Local audio is optional. Prefer real dictionary MP3 before browser TTS.
+  }
+
+  try {
+    await playDictionaryAudio(word, accent);
   } catch {
     await speakWithWebSpeech(word.replace(/-/g, " "), accent, settings);
   }
@@ -166,7 +246,9 @@ export async function playWordAudio(word: string, accent: AudioAccent, settings:
 export function preloadAudio(word: string) {
   const base = import.meta.env.BASE_URL || "/";
   ["us", "uk"].forEach((accent) => {
-    const audio = new Audio(`${base}audio/${accent}/${normalizeWord(word)}.mp3`);
-    audio.preload = "metadata";
+    const localAudio = new Audio(`${base}audio/${accent}/${normalizeWord(word)}.mp3`);
+    localAudio.preload = "metadata";
+    const dictionaryAudio = new Audio(getStaticDictionaryAudioUrls(word, accent as AudioAccent)[0]);
+    dictionaryAudio.preload = "metadata";
   });
 }
