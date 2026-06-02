@@ -1,4 +1,4 @@
-const CACHE_VERSION = "7eb6ae2b3c28";
+const CACHE_VERSION = "7200610730cb";
 const CACHE_NAME = `reword-cache-${CACHE_VERSION}`;
 const BASE_PATH = new URL(self.registration.scope).pathname;
 const withBase = (path) => `${BASE_PATH}${path}`.replace(/\/{2,}/g, "/");
