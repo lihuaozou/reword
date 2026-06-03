@@ -31,7 +31,7 @@ export function UnitsPage({ units, progressMap, onOpenUnit }: UnitsPageProps) {
           <div>
             <div className="text-xs font-semibold uppercase text-copper">Units</div>
             <h1 className="mt-1 text-3xl font-semibold text-ink">单元板块</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-500">先分成基础版和必备版。必备版已放入 Unit1-26，按重复记忆节奏推进。</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">先分成基础版和必备版。必备版已放入 Unit1-26，可以从任意单元继续学习、理解或测试。</p>
           </div>
           <ModeTabs
             value={deck}

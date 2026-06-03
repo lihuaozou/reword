@@ -24,6 +24,74 @@ create table if not exists public.profiles (
   unique(user_id)
 );
 
+create or replace function public.sanitize_username(candidate text, fallback text)
+returns text
+language plpgsql
+immutable
+as $$
+declare
+  cleaned text;
+begin
+  cleaned := regexp_replace(trim(coalesce(candidate, '')), '[^0-9A-Za-z_一-龥]+', '_', 'g');
+  cleaned := regexp_replace(cleaned, '_+', '_', 'g');
+  cleaned := regexp_replace(cleaned, '^_+|_+$', '', 'g');
+  cleaned := left(cleaned, 20);
+  if cleaned ~ '^[0-9A-Za-z_一-龥]{2,20}$' then
+    return cleaned;
+  end if;
+  return fallback;
+end;
+$$;
+
+create or replace function public.is_username_available(candidate text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select not exists (
+    select 1
+    from public.profiles
+    where lower(username) = lower(trim(candidate))
+  );
+$$;
+
+grant execute on function public.is_username_available(text) to anon, authenticated;
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  preferred_username text;
+  fallback_username text;
+begin
+  fallback_username := 'user_' || left(new.id::text, 8);
+  preferred_username := public.sanitize_username(
+    coalesce(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
+    fallback_username
+  );
+
+  insert into public.profiles (user_id, username, display_name)
+  values (
+    new.id,
+    preferred_username,
+    coalesce(new.raw_user_meta_data->>'display_name', preferred_username)
+  )
+  on conflict (user_id) do nothing;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
 create table if not exists public.user_stats (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null unique references auth.users(id) on delete cascade,

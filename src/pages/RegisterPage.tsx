@@ -6,18 +6,27 @@ type RegisterPageProps = {
   configured: boolean;
   loading: boolean;
   error?: string | null;
-  onRegister: (username: string, email: string, password: string) => Promise<void>;
+  onRegister: (username: string, email: string, password: string) => Promise<{ session: unknown | null }>;
   onSuccess: () => void;
   onLogin: () => void;
 };
 
 export function RegisterPage({ configured, loading, error, onRegister, onSuccess, onLogin }: RegisterPageProps) {
   const [message, setMessage] = useState<string | null>(null);
+  const disabledReason = !configured ? "当前线上包未读取到 Supabase 配置，请先配置 GitHub Secrets 并重新部署。你仍可使用游客模式背单词。" : undefined;
 
   const submit = async (username: string, email: string, password: string) => {
-    await onRegister(username, email, password);
-    setMessage("注册成功。如果 Supabase 开启了邮箱验证，请先到邮箱完成验证。");
-    onSuccess();
+    if (!configured) {
+      setMessage(disabledReason || "当前暂不可用。");
+      return;
+    }
+    const result = await onRegister(username, email, password);
+    if (result.session) {
+      setMessage("注册成功，已登录。");
+      onSuccess();
+      return;
+    }
+    setMessage("注册成功，请先到邮箱完成验证，然后回到登录页登录。");
   };
 
   return (
@@ -33,11 +42,11 @@ export function RegisterPage({ configured, loading, error, onRegister, onSuccess
           </button>
         </div>
 
-        {!configured ? <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">请先配置 Supabase 后再注册账号。当前可继续使用本地模式。</div> : null}
+        {!configured ? <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">{disabledReason}</div> : null}
         {error ? <div className="mb-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div> : null}
         {message ? <div className="mb-4 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</div> : null}
 
-        <RegisterForm loading={loading || !configured} onSubmit={submit} />
+        <RegisterForm loading={loading} disabled={!configured} disabledReason={disabledReason} onSubmit={submit} />
 
         <button type="button" onClick={onLogin} className="btn-secondary mt-4 w-full">
           <LogIn size={18} aria-hidden="true" />

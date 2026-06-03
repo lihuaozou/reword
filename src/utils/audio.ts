@@ -86,6 +86,14 @@ function getNaturalSpeechRate(rate: AudioSettings["speechRate"]) {
   return rate;
 }
 
+function shouldPreferBrowserSpeech() {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
+  const mobileLike = window.matchMedia?.("(pointer: coarse)").matches;
+  const userAgent = navigator.userAgent.toLowerCase();
+  const chromiumLike = /chrome|crios|edg|samsungbrowser/.test(userAgent) && !/firefox/.test(userAgent);
+  return Boolean(mobileLike && chromiumLike && "speechSynthesis" in window);
+}
+
 function getStaticDictionaryAudioUrls(word: string, accent: AudioAccent) {
   const normalized = normalizeWord(word);
   if (!normalized) return [];
@@ -230,6 +238,15 @@ export async function speakWithWebSpeech(word: string, accent: AudioAccent, sett
 
 export async function playWordAudio(word: string, accent: AudioAccent, settings: Partial<AudioSettings> = {}) {
   stopAudio();
+  if (shouldPreferBrowserSpeech()) {
+    try {
+      await speakWithWebSpeech(word.replace(/-/g, " "), accent, settings);
+      return;
+    } catch {
+      // Mobile Chrome can delay voice loading. Fall back to recorded sources.
+    }
+  }
+
   try {
     await playLocalAudio(word, accent);
     return;

@@ -19,9 +19,11 @@ type StudyPageProps = {
 export function StudyPage({ unit, words, progressMap, audioSettings, onLearn }: StudyPageProps) {
   const [index, setIndex] = useState(0);
   const current = words[index];
-  const learnedCount = useMemo(() => words.filter((word) => progressMap[word.id]?.learned).length, [words, progressMap]);
+  const learnedCount = useMemo(() => words.filter((word) => progressMap[word.id]?.learned || progressMap[word.id]?.firstLearnedAt).length, [words, progressMap]);
   const { isDesktop, isMobile } = useResponsive();
   const currentProgress = current ? progressMap[current.id] : undefined;
+  const currentLearned = Boolean(currentProgress?.learned || currentProgress?.firstLearnedAt);
+  const learnButtonLabel = currentLearned ? "已学习" : "未学习";
   const listStart = Math.max(0, index - 12);
   const visibleWords = words.slice(listStart, Math.min(words.length, listStart + 28));
 
@@ -34,11 +36,16 @@ export function StudyPage({ unit, words, progressMap, audioSettings, onLearn }: 
     setIndex((value) => Math.min(words.length - 1, Math.max(0, value + offset)));
   };
 
+  const markCurrentLearned = () => {
+    if (!current) return;
+    onLearn(current.id);
+  };
+
   useKeyboardShortcuts({
     onSpace: () => current && playWordAudio(current.word, audioSettings.defaultAccent, audioSettings),
     onArrowLeft: () => move(-1),
     onArrowRight: () => move(1),
-    onEnter: () => current && onLearn(current.id),
+    onEnter: markCurrentLearned,
   });
 
   if (!current) return null;
@@ -69,12 +76,17 @@ export function StudyPage({ unit, words, progressMap, audioSettings, onLearn }: 
           </button>
           <button
             type="button"
-            onClick={() => onLearn(current.id)}
+            onClick={markCurrentLearned}
+            data-sound="none"
             aria-label="标记当前单词已学"
-            className="inline-flex h-11 min-h-0 items-center justify-center gap-1.5 rounded-lg border border-emerald-700 bg-emerald-600 px-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:translate-y-px"
+            className={`inline-flex h-11 min-h-0 items-center justify-center gap-1.5 rounded-lg border px-2 text-xs font-semibold shadow-sm transition active:translate-y-px ${
+              currentLearned
+                ? "border-emerald-700 bg-emerald-600 text-white hover:bg-emerald-700"
+                : "border-rose-700 bg-rose-600 text-white hover:bg-rose-700"
+            }`}
           >
-            <Check size={16} aria-hidden="true" />
-            已学
+            {currentLearned ? <Check size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}
+            {learnButtonLabel}
           </button>
           <button type="button" onClick={() => move(1)} disabled={index === words.length - 1} className="btn-secondary h-11 min-h-0 px-2 text-xs disabled:opacity-40">
             下一个
@@ -109,6 +121,7 @@ export function StudyPage({ unit, words, progressMap, audioSettings, onLearn }: 
             {visibleWords.map((word, offset) => {
               const absoluteIndex = listStart + offset;
               const active = absoluteIndex === index;
+              const itemLearned = Boolean(progressMap[word.id]?.learned || progressMap[word.id]?.firstLearnedAt);
               return (
                 <button
                   key={word.id}
@@ -119,7 +132,12 @@ export function StudyPage({ unit, words, progressMap, audioSettings, onLearn }: 
                   }`}
                 >
                   <span className="min-w-0 truncate font-semibold">{word.word}</span>
-                  <span className="shrink-0 text-xs">#{word.order}</span>
+                  <span className="flex shrink-0 items-center gap-1.5 text-xs">
+                    <span className={itemLearned ? "rounded-md bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-700" : "rounded-md bg-rose-50 px-1.5 py-0.5 font-semibold text-rose-700"}>
+                      {itemLearned ? "已学习" : "未学习"}
+                    </span>
+                    <span>#{word.order}</span>
+                  </span>
                 </button>
               );
             })}
@@ -161,20 +179,23 @@ export function StudyPage({ unit, words, progressMap, audioSettings, onLearn }: 
         </aside>
       </div>
 
-      <div className="sticky bottom-20 z-20 grid gap-3 rounded-lg border border-slate-200 bg-[#f8fbff]/95 p-2 shadow-soft backdrop-blur sm:grid-cols-4 md:static md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+      <div className="sticky bottom-20 z-20 grid gap-3 rounded-lg border border-slate-200 bg-[#f8fbff]/95 p-2 shadow-soft backdrop-blur sm:grid-cols-3 md:static md:border-0 md:bg-transparent md:p-0 md:shadow-none">
         <button type="button" onClick={() => move(-1)} disabled={index === 0} className="btn-secondary disabled:opacity-40">
           <ArrowLeft size={18} aria-hidden="true" />
           上一个
         </button>
-        <button type="button" onClick={() => onLearn(current.id)} className="btn-secondary sm:col-span-2">
-          <Plus size={18} aria-hidden="true" />
-          加入今日学习
+        <button
+          type="button"
+          onClick={markCurrentLearned}
+          data-sound="none"
+          className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition active:translate-y-px ${
+            currentLearned ? "border border-emerald-700 bg-emerald-600 text-white hover:bg-emerald-700" : "border border-rose-700 bg-rose-600 text-white hover:bg-rose-700"
+          }`}
+        >
+          {currentLearned ? <Check size={18} aria-hidden="true" /> : <Plus size={18} aria-hidden="true" />}
+          {learnButtonLabel}
         </button>
-        <button type="button" onClick={() => onLearn(current.id)} className="btn-primary">
-          <Check size={18} aria-hidden="true" />
-          标记已初学
-        </button>
-        <button type="button" onClick={() => move(1)} disabled={index === words.length - 1} className="btn-secondary sm:col-start-4 disabled:opacity-40">
+        <button type="button" onClick={() => move(1)} disabled={index === words.length - 1} className="btn-secondary disabled:opacity-40">
           <ArrowRight size={18} aria-hidden="true" />
           下一个
         </button>

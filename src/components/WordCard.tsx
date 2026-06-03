@@ -12,13 +12,22 @@ type WordCardProps = {
 };
 
 export function WordCard({ word, progress, compact = false, mobileCompact = false, audioSettings }: WordCardProps) {
+  const isLearned = Boolean(progress?.learned || progress?.firstLearnedAt);
+  const learningChipClass = isLearned
+    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+    : "border-rose-200 bg-rose-50 text-rose-700";
+  const learningLabel = isLearned ? "已学习" : "未学习";
+
   if (mobileCompact) {
     return (
       <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
         <div className="border-b border-slate-200 bg-[#f8fbff] p-3">
           <div className="mb-2 flex items-center justify-between gap-2">
             <span className="truncate rounded-md border border-harbor/15 bg-white px-2 py-0.5 text-[11px] font-medium text-harbor">{word.unitName}</span>
-            <span className="text-[11px] text-slate-500">#{word.order}</span>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <span className={`rounded-md border px-1.5 py-0.5 text-[11px] font-semibold ${learningChipClass}`}>{learningLabel}</span>
+              <span className="text-[11px] text-slate-500">#{word.order}</span>
+            </div>
           </div>
           <div className="space-y-2">
             <h1 className={`break-words font-semibold leading-[1.06] text-ink ${word.word.length > 18 ? "text-[27px]" : word.word.length > 12 ? "text-[31px]" : "text-[36px]"}`}>
@@ -52,7 +61,7 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
 
           <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-slate-600">
             <span className="rounded-md border border-slate-200 bg-white px-2 py-1">S{progress?.stage || 0}</span>
-            <span className="rounded-md border border-slate-200 bg-white px-2 py-1">{statusLabel(progress)}</span>
+            <span className={`rounded-md border px-2 py-1 font-semibold ${learningChipClass}`}>{statusLabel(progress)}</span>
             <span className="rounded-md border border-slate-200 bg-white px-2 py-1">{formatDateTime(progress?.nextReviewAt)}</span>
           </div>
         </div>
@@ -66,7 +75,10 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
         <div className="border-b border-slate-200 bg-[#f8fbff] p-5 md:p-6">
           <div className="mb-5 flex items-center justify-between gap-3">
             <span className="rounded-md border border-harbor/15 bg-white px-2.5 py-1 text-xs font-medium text-harbor">{word.unitName}</span>
-            <span className="text-xs text-slate-500">#{word.order}</span>
+            <div className="flex shrink-0 items-center gap-2">
+              <span className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${learningChipClass}`}>{learningLabel}</span>
+              <span className="text-xs text-slate-500">#{word.order}</span>
+            </div>
           </div>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -92,7 +104,10 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
                 <AudioButton word={word.word} accent="uk" settings={audioSettings} />
               </div>
             </div>
-            <span className="rounded-md border border-harbor/15 bg-[#f8fbff] px-2.5 py-1 text-xs text-harbor">#{word.order}</span>
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <span className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${learningChipClass}`}>{learningLabel}</span>
+              <span className="rounded-md border border-harbor/15 bg-[#f8fbff] px-2.5 py-1 text-xs text-harbor">#{word.order}</span>
+            </div>
           </div>
         ) : null}
 

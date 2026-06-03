@@ -151,6 +151,7 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
                 <button
                   key={option}
                   type="button"
+                  data-sound="none"
                   onClick={() => choose(option)}
                   className={`flex min-h-12 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-[13px] font-semibold leading-snug transition ${
                     answered && isAnswer
@@ -216,6 +217,7 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
                   <button
                     key={option}
                     type="button"
+                    data-sound="none"
                     onClick={() => choose(option)}
                     className={`quiz-option ${
                       answered && isAnswer

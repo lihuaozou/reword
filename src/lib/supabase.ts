@@ -15,7 +15,19 @@ function isRealEnvValue(value: string) {
   return !placeholderValues.has(value.replace(/\/$/, ""));
 }
 
-const urlPresent = isRealEnvValue(supabaseUrl);
+function isUsableSupabaseUrl(value: string) {
+  if (!isRealEnvValue(value)) return false;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return false;
+    if (url.hostname.endsWith("github.io")) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const urlPresent = isUsableSupabaseUrl(supabaseUrl);
 const anonKeyPresent = isRealEnvValue(supabaseAnonKey);
 
 export const supabaseConfig = {

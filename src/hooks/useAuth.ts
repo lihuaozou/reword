@@ -4,6 +4,8 @@ import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import { getCurrentSession, getProfile, signInWithEmail, signOut, signUpWithEmail, upsertProfile } from "../services/authService";
 import type { UserProfile } from "../types";
 
+const disabledMessage = "当前线上包未读取到 Supabase 配置，请先配置 GitHub Secrets 并重新部署。你仍可使用游客模式背单词。";
+
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -63,6 +65,10 @@ export function useAuth() {
 
   const login = useCallback(
     async (email: string, password: string) => {
+      if (!isSupabaseConfigured) {
+        setError(disabledMessage);
+        throw new Error(disabledMessage);
+      }
       setLoading(true);
       setError(null);
       try {
@@ -84,13 +90,17 @@ export function useAuth() {
 
   const register = useCallback(
     async (username: string, email: string, password: string) => {
+      if (!isSupabaseConfigured) {
+        setError(disabledMessage);
+        throw new Error(disabledMessage);
+      }
       setLoading(true);
       setError(null);
       try {
         const data = await signUpWithEmail({ username, email, password });
         setSession(data.session);
-        setUser(data.user);
-        if (data.user) await refreshProfile(data.user);
+        setUser(data.session ? data.user : null);
+        if (data.session && data.user) await refreshProfile(data.user);
         return data;
       } catch (nextError) {
         const message = nextError instanceof Error ? nextError.message : "注册失败";

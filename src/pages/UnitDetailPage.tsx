@@ -66,6 +66,29 @@ export function UnitDetailPage({ unit, progressMap, onStudy, onRecall, onQuiz }:
         </div>
       </section>
 
+      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="font-semibold text-ink">单元词表</h2>
+          <span className="text-xs font-semibold text-slate-500">{stats.learned}/{unit.words.length}</span>
+        </div>
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+          {unit.words.map((word) => {
+            const progress = progressMap[word.id];
+            const learned = Boolean(progress?.learned || progress?.firstLearnedAt);
+            return (
+              <div key={word.id} className="flex items-center justify-between gap-3 rounded-lg border border-sky-100 bg-[#f8fbff] px-3 py-2">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-ink">{word.word}</div>
+                  <div className="truncate text-xs text-slate-500">{word.definitions[0]?.meaning || word.phonetic}</div>
+                </div>
+                <span className={learned ? "shrink-0 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700" : "shrink-0 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700"}>
+                  {learned ? "已学习" : "未学习"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

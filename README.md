@@ -59,6 +59,14 @@ Supabase 配置步骤：
 docs/DO_THIS_FIRST_SUPABASE.md
 ```
 
+请先在 Supabase SQL Editor 执行最新版：
+
+```text
+supabase/schema.sql
+```
+
+最新版 schema 包含账号资料表、用户名可用性检查 RPC、注册后自动创建资料的触发器。没执行时，注册可能提示 schema 未更新或用户名检查不可用。
+
 必须配置两个 GitHub Actions Secrets：
 
 ```text
@@ -79,6 +87,16 @@ Actions -> Deploy GitHub Pages -> Run workflow
 ```
 
 如果线上仍显示“本地模式”或 Supabase URL/key 缺失，通常是 Secrets 没填、名字填错，或填完后没有重新部署 GitHub Pages。不要把 Supabase service role key 写进前端、仓库或 GitHub Pages 构建变量。
+
+Supabase 未配置时，线上登录/注册会自动禁用并保留游客本地背词模式，不会再把 HTML 404 页面当 JSON 解析。
+
+## 学习状态和音效
+
+- 记忆页按钮会用红色“未学习”和绿色“已学习”区分状态。
+- 第一次标记已学习会保存进度并发放奖励，重复点击不会重复奖励。
+- 单元词表、总词表会显示已学习/未学习状态。
+- 设置页可以关闭按钮音效，或把音量调到 0%、25%、50%、75%、100%。
+- 手机 Chrome 单词发音优先使用浏览器语音合成，失败时再回退到录音/词典音频。
 
 ## GitHub Pages 部署
 

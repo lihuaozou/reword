@@ -96,6 +96,11 @@ export type AudioSettings = {
   repeatCount: 1 | 2;
 };
 
+export type SoundSettings = {
+  enabled: boolean;
+  volume: 0 | 0.25 | 0.5 | 0.75 | 1;
+};
+
 export type CheckInRecord = {
   date: string;
   checkedAt: string;
@@ -165,6 +170,7 @@ export type UserStats = {
   rewardHistory: RewardRecord[];
   inventory: InventoryItem[];
   audioSettings: AudioSettings;
+  soundSettings: SoundSettings;
 };
 
 export type ShopItem = {
@@ -214,4 +220,5 @@ export type AppRoute = {
   name: RouteName;
   unitId?: string;
   dueOnly?: boolean;
+  quizMode?: "wrong";
 };

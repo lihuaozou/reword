@@ -11,7 +11,7 @@ export function BossBattleCard({ unit, progressMap, stats, onChallenge }: { unit
           <div className="font-semibold text-ink">{boss.subtitle}</div>
           <div className="mt-1 text-sm text-slate-500">学习 {boss.learnedPercent}% / 到期 {boss.dueLeft}</div>
         </div>
-        <button type="button" onClick={() => onChallenge(unit.id)} disabled={!boss.eligible || boss.defeated} className="btn-secondary min-h-9 px-3 py-1.5 disabled:opacity-40">
+        <button type="button" onClick={() => onChallenge(unit.id)} disabled={!boss.eligible || boss.defeated} data-sound="none" className="btn-secondary min-h-9 px-3 py-1.5 disabled:opacity-40">
           {boss.defeated ? "已击败" : "挑战"}
         </button>
       </div>

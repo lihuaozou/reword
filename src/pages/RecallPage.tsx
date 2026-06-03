@@ -124,15 +124,15 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
         />
 
         <div className="fixed inset-x-3 z-40 grid grid-cols-3 gap-2" style={{ bottom: "calc(72px + env(safe-area-inset-bottom))" }}>
-          <button type="button" onClick={() => handleGrade("known")} className="inline-flex h-11 items-center justify-center gap-1 rounded-lg bg-emerald-600 px-2 text-xs font-semibold text-white shadow-sm active:translate-y-px">
+          <button type="button" data-sound="none" onClick={() => handleGrade("known")} className="inline-flex h-11 items-center justify-center gap-1 rounded-lg bg-emerald-600 px-2 text-xs font-semibold text-white shadow-sm active:translate-y-px">
             <ThumbsUp size={15} aria-hidden="true" />
             记住
           </button>
-          <button type="button" onClick={() => handleGrade("fuzzy")} className="inline-flex h-11 items-center justify-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-2 text-xs font-semibold text-amber-700 shadow-sm active:translate-y-px">
+          <button type="button" data-sound="none" onClick={() => handleGrade("fuzzy")} className="inline-flex h-11 items-center justify-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-2 text-xs font-semibold text-amber-700 shadow-sm active:translate-y-px">
             <RotateCcw size={15} aria-hidden="true" />
             不太熟
           </button>
-          <button type="button" onClick={() => handleGrade("forgotten")} className="inline-flex h-11 items-center justify-center gap-1 rounded-lg border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 shadow-sm active:translate-y-px">
+          <button type="button" data-sound="none" onClick={() => handleGrade("forgotten")} className="inline-flex h-11 items-center justify-center gap-1 rounded-lg border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 shadow-sm active:translate-y-px">
             <ThumbsDown size={15} aria-hidden="true" />
             不记住
           </button>
@@ -216,15 +216,15 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
               <Eye size={18} aria-hidden="true" />
               查看释义
             </button>
-            <button type="button" onClick={() => handleGrade("known")} className="btn-primary">
+            <button type="button" data-sound="none" onClick={() => handleGrade("known")} className="btn-primary">
               <ThumbsUp size={18} aria-hidden="true" />
               记住
             </button>
-            <button type="button" onClick={() => handleGrade("fuzzy")} className="btn-secondary">
+            <button type="button" data-sound="none" onClick={() => handleGrade("fuzzy")} className="btn-secondary">
               <RotateCcw size={18} aria-hidden="true" />
               不太熟
             </button>
-            <button type="button" onClick={() => handleGrade("forgotten")} className="btn-danger">
+            <button type="button" data-sound="none" onClick={() => handleGrade("forgotten")} className="btn-danger">
               <ThumbsDown size={18} aria-hidden="true" />
               不记住
             </button>

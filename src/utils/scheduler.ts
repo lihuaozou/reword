@@ -31,9 +31,11 @@ export function getNextReviewTime(stage: number, now = new Date()) {
 }
 
 export function markAsLearned(wordProgress: WordProgress, now = new Date()): WordProgress {
+  const nextStage = Math.max(1, wordProgress.stage);
   const next = {
     ...ensureLearned(wordProgress, now),
-    nextReviewAt: getNextReviewTime(1, now),
+    stage: nextStage,
+    nextReviewAt: getNextReviewTime(nextStage, now),
   };
   return appendHistory(next, "learned", now);
 }

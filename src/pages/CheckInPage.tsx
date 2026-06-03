@@ -30,11 +30,11 @@ export function CheckInPage({ words, progressMap, stats, onSignIn, onCheckIn }: 
             <p className="mt-2 text-sm text-slate-500">签到是轻量奖励，打卡需要完成学习目标。</p>
           </div>
           <div className="flex gap-3">
-            <button type="button" onClick={onSignIn} disabled={signed} className="btn-secondary disabled:opacity-40">
+            <button type="button" onClick={onSignIn} disabled={signed} data-sound="none" className="btn-secondary disabled:opacity-40">
               <Gift size={18} aria-hidden="true" />
               {signed ? "今日已签到" : "每日签到"}
             </button>
-            <button type="button" onClick={onCheckIn} disabled={!ready || checked} className="btn-primary disabled:opacity-40">
+            <button type="button" onClick={onCheckIn} disabled={!ready || checked} data-sound="none" className="btn-primary disabled:opacity-40">
               <CheckCircle2 size={18} aria-hidden="true" />
               {checked ? "今日已打卡" : ready ? "完成今日打卡" : "未达成打卡条件"}
             </button>

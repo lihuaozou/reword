@@ -15,8 +15,13 @@ type LoginPageProps = {
 
 export function LoginPage({ configured, loading, error, onLogin, onSuccess, onRegister, onGuest }: LoginPageProps) {
   const [message, setMessage] = useState<string | null>(null);
+  const disabledReason = !configured ? "当前线上包未读取到 Supabase 配置，请先配置 GitHub Secrets 并重新部署。你仍可使用游客模式背单词。" : undefined;
 
   const submit = async (email: string, password: string) => {
+    if (!configured) {
+      setMessage(disabledReason || "当前暂不可用。");
+      return;
+    }
     await onLogin(email, password);
     onSuccess();
   };
@@ -47,13 +52,15 @@ export function LoginPage({ configured, loading, error, onLogin, onSuccess, onRe
           </button>
         </div>
 
-        {!configured ? <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">请先配置 Supabase 后再登录账号。当前可继续使用本地模式。</div> : null}
+        {!configured ? <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">{disabledReason}</div> : null}
 
         {error ? <div className="mb-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div> : null}
         {message ? <div className="mb-4 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</div> : null}
 
         <LoginForm
-          loading={loading || !configured}
+          loading={loading}
+          disabled={!configured}
+          disabledReason={disabledReason}
           onSubmit={submit}
           onForgotPassword={async (email) => {
             await requestPasswordReset(email);

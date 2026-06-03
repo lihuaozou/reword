@@ -34,7 +34,7 @@ export async function safeFetchJson<T = unknown>(url: string, options?: RequestI
         ok: false,
         status: response.status,
         contentType,
-        error: `接口返回的不是 JSON${body ? `：${previewBody(body)}` : ""}`,
+        error: `请求返回了 HTML 页面，可能是接口地址不存在、Release 未生成、GitHub Pages 返回 404，或 Supabase 配置错误。${body ? `返回预览：${previewBody(body)}` : ""}`,
       };
     }
 

@@ -122,6 +122,10 @@ export function createDefaultUserStats(): UserStats {
       speechRate: 0.9,
       repeatCount: 1,
     },
+    soundSettings: {
+      enabled: true,
+      volume: 0.25,
+    },
   };
 }
 
@@ -131,6 +135,7 @@ export function mergeUserStats(stats: Partial<UserStats>): UserStats {
     ...defaults,
     ...stats,
     audioSettings: { ...defaults.audioSettings, ...stats.audioSettings },
+    soundSettings: { ...defaults.soundSettings, ...stats.soundSettings },
     dailyRewardCaps: stats.dailyRewardCaps || {},
     checkInHistory: stats.checkInHistory || [],
     studySessions: stats.studySessions || [],

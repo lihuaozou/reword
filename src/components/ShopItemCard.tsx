@@ -14,7 +14,7 @@ export function ShopItemCard({ item, stats, onExchange }: { item: ShopItem; stat
           <div className="mt-2 text-xs text-slate-500">{item.rarity} / {item.type}</div>
         </div>
       </div>
-      <button type="button" onClick={() => onExchange(item)} disabled={(!canBuy || owned) && item.type !== "tool"} className="btn-primary mt-4 w-full disabled:opacity-40">
+      <button type="button" onClick={() => onExchange(item)} disabled={(!canBuy || owned) && item.type !== "tool"} data-sound="none" className="btn-primary mt-4 w-full disabled:opacity-40">
         {owned && item.type !== "tool" ? "已拥有" : `兑换 ${item.priceCoins} 金币${item.priceDiamonds ? ` + ${item.priceDiamonds} 钻石` : ""}`}
       </button>
     </div>

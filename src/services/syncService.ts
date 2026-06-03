@@ -219,6 +219,7 @@ function mergeStats(local: UserStats, cloud: UserStats): UserStats {
       };
     }),
     audioSettings: cloud.audioSettings,
+    soundSettings: cloud.soundSettings || local.soundSettings,
     equippedTheme: cloud.equippedTheme || local.equippedTheme,
     equippedAvatar: cloud.equippedAvatar || local.equippedAvatar,
   };

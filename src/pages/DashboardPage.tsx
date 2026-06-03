@@ -1,4 +1,4 @@
-import { BarChart3, BookCheck, CalendarClock, Flame, Gauge, Gift, LibraryBig, ListChecks, LogIn, Repeat2, ShoppingBag, Swords, Target, TrendingUp } from "lucide-react";
+import { BarChart3, BookCheck, CalendarClock, Flame, Gauge, Gift, LibraryBig, ListChecks, LogIn, PlayCircle, ShoppingBag, Swords, Target, TrendingUp } from "lucide-react";
 import type { ProgressMap, SyncState, UserStats, WordEntry, WordUnit } from "../types";
 import { CoinDisplay } from "../components/CoinDisplay";
 import { InstallGuideCard } from "../components/InstallGuideCard";
@@ -20,7 +20,9 @@ type DashboardPageProps = {
   progressMap: ProgressMap;
   stats: UserStats;
   onSignIn: () => void;
+  onContinueStudy: () => void;
   onNavigateReview: () => void;
+  onNavigateWrongQuiz: () => void;
   onNavigateUnits: () => void;
   onNavigateCheckIn: () => void;
   onNavigateMonster: () => void;
@@ -45,7 +47,9 @@ export function DashboardPage({
   progressMap,
   stats,
   onSignIn,
+  onContinueStudy,
   onNavigateReview,
+  onNavigateWrongQuiz,
   onNavigateUnits,
   onNavigateCheckIn,
   onNavigateMonster,
@@ -111,17 +115,21 @@ export function DashboardPage({
             </button>
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
-            <button type="button" onClick={onNavigateReview} className="btn-primary">
+            <button type="button" onClick={onContinueStudy} className="btn-primary">
+              <PlayCircle size={18} aria-hidden="true" />
+              继续学习
+            </button>
+            <button type="button" onClick={onNavigateReview} className="btn-secondary">
               <CalendarClock size={18} aria-hidden="true" />
               开始今日复习
+            </button>
+            <button type="button" onClick={onNavigateWrongQuiz} className="btn-secondary">
+              <ListChecks size={18} aria-hidden="true" />
+              错题强化
             </button>
             <button type="button" onClick={onNavigateUnits} className="btn-secondary">
               <LibraryBig size={18} aria-hidden="true" />
               进入单元
-            </button>
-            <button type="button" onClick={onNavigateMonster} className="btn-secondary">
-              <Swords size={18} aria-hidden="true" />
-              打怪进度
             </button>
           </div>
         </div>
@@ -137,7 +145,7 @@ export function DashboardPage({
             <ProgressBar value={todayStats.masteredCount} max={todayStats.totalCount} label={`${todayStats.masteredCount}/${todayStats.totalCount}`} />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-            <button type="button" onClick={onSignIn} disabled={signed} className="btn-secondary min-h-10 disabled:opacity-45">
+            <button type="button" onClick={onSignIn} disabled={signed} data-sound="none" className="btn-secondary min-h-10 disabled:opacity-45">
               <Gift size={17} aria-hidden="true" />
               {signed ? "已签到" : "签到"}
             </button>
@@ -173,34 +181,6 @@ export function DashboardPage({
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="rounded-lg border border-sky-100 bg-white p-5 shadow-soft">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-sm font-semibold text-harbor">
-              <Repeat2 size={18} aria-hidden="true" />
-              重复记忆节奏
-            </div>
-            <h2 className="mt-2 text-xl font-semibold text-ink">新学一次，复习多轮，测试收口</h2>
-          </div>
-          <button type="button" onClick={onNavigateReview} className="btn-secondary">
-            进入复习
-          </button>
-        </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-4">
-          {[
-            ["初学", "先把释义看清，加入今日学习"],
-            ["5分钟", "马上复现一次，挡住第一波遗忘"],
-            ["间隔复习", "按 Stage 自动推到 30 分钟、12 小时、1 天"],
-            ["测试", "用选择题把熟悉变成稳定掌握"],
-          ].map(([title, body]) => (
-            <div key={title} className="rounded-lg border border-sky-100 bg-[#f8fbff] p-4">
-              <div className="text-base font-semibold text-ink">{title}</div>
-              <div className="mt-2 text-sm leading-6 text-slate-500">{body}</div>
-            </div>
-          ))}
         </div>
       </section>
 

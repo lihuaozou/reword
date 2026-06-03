@@ -25,7 +25,8 @@ import { StudyTimer } from "./components/StudyTimer";
 import { units, words } from "./data/words";
 import { useAuth } from "./hooks/useAuth";
 import { useCloudSync } from "./hooks/useCloudSync";
-import type { AppRoute, AudioSettings, ProgressMap, RewardRecord, RouteName, ShopItem, StudySession, SyncSnapshot, UserStats, WordProgress } from "./types";
+import { useSoundEffects } from "./hooks/useSoundEffects";
+import type { AppRoute, AudioSettings, ProgressMap, RewardRecord, RouteName, ShopItem, SoundSettings, StudySession, SyncSnapshot, UserStats, WordProgress } from "./types";
 import { unlockAvailableAchievements } from "./utils/achievements";
 import { canCheckIn, checkInToday, signInToday } from "./utils/checkin";
 import { getBossStatus } from "./utils/monster";
@@ -33,7 +34,8 @@ import { applyReward } from "./utils/rewards";
 import { appendHistory, createEmptyProgress, exportProgressToJson, getProgress, getUserStats, importProgressFromJson, resetAllProgress, saveProgress, saveUserStats } from "./utils/storage";
 import { addStudySession, getStudyStats } from "./utils/statistics";
 import { exchangeItem } from "./utils/shop";
-import { isMastered, markAsForgotten, markAsFuzzy, markAsKnown, markAsLearned } from "./utils/scheduler";
+import { getWrongWords, isMastered, markAsForgotten, markAsFuzzy, markAsKnown, markAsLearned } from "./utils/scheduler";
+import { playClickSound, playErrorSound, playRewardSound, playSuccessSound, playToggleSound } from "./utils/sound";
 
 function downloadJson(json: string) {
   const blob = new Blob([json], { type: "application/json" });
@@ -61,6 +63,7 @@ export default function App() {
   const [latestReward, setLatestReward] = useState<RewardRecord | undefined>();
   const [updateReady, setUpdateReady] = useState(false);
   const auth = useAuth();
+  useSoundEffects(userStats.soundSettings);
 
   const applySyncSnapshot = useCallback((snapshot: SyncSnapshot) => {
     setProgressMap(snapshot.progress);
@@ -75,7 +78,13 @@ export default function App() {
   });
 
   const selectedUnit = useMemo(() => units.find((unit) => unit.id === route.unitId) || units[0], [route.unitId]);
-  const scopeWords = route.unitId ? selectedUnit.words : words;
+  const scopeWords = useMemo(() => {
+    if (route.name === "quiz" && route.quizMode === "wrong") {
+      const wrongWords = getWrongWords(words, progressMap);
+      return wrongWords.length ? wrongWords : words;
+    }
+    return route.unitId ? selectedUnit.words : words;
+  }, [progressMap, route.name, route.quizMode, route.unitId, selectedUnit.words]);
 
   useEffect(() => {
     if (auth.user && cloudSync.needsFirstSyncChoice && route.name !== "sync") {
@@ -156,11 +165,15 @@ export default function App() {
   };
 
   const learnWord = (wordId: string) => {
+    const alreadyLearned = Boolean(progressMap[wordId]?.learned || progressMap[wordId]?.firstLearnedAt);
+    if (alreadyLearned) playClickSound(userStats.soundSettings);
+    else playSuccessSound(userStats.soundSettings);
+
     updateProgress(
       wordId,
       (progress) => markAsLearned(progress),
       (stats, before) => {
-        if (before.learned) return stats;
+        if (before.learned || before.firstLearnedAt) return stats;
         return applyReward(
           {
             ...stats,
@@ -181,6 +194,10 @@ export default function App() {
 
   const gradeWord = (wordId: string, grade: "known" | "fuzzy" | "forgotten") => {
     const now = new Date();
+    if (grade === "known") playSuccessSound(userStats.soundSettings);
+    else if (grade === "fuzzy") playToggleSound(userStats.soundSettings);
+    else playErrorSound(userStats.soundSettings);
+
     updateProgress(
       wordId,
       (progress) => {
@@ -237,6 +254,9 @@ export default function App() {
 
   const answerQuiz = (wordId: string, correct: boolean) => {
     const now = new Date();
+    if (correct) playSuccessSound(userStats.soundSettings);
+    else playErrorSound(userStats.soundSettings);
+
     updateProgress(
       wordId,
       (progress) => {
@@ -342,18 +362,25 @@ export default function App() {
   }, [cloudSync.queueLocalChange]);
 
   const handleSignIn = () => {
+    playRewardSound(userStats.soundSettings);
     updateStats((stats) => signInToday(stats));
   };
 
   const handleCheckIn = () => {
     if (!canCheckIn(words, progressMap, userStats)) {
+      playErrorSound(userStats.soundSettings);
       window.alert("今日任务还没达成，先学几个新词、复习或完成一次测试。");
       return;
     }
+    playRewardSound(userStats.soundSettings);
     updateStats((stats) => checkInToday(stats));
   };
 
   const handleExchange = (item: ShopItem) => {
+    const preview = exchangeItem(userStats, item);
+    if (preview === userStats) playErrorSound(userStats.soundSettings);
+    else playRewardSound(userStats.soundSettings);
+
     setUserStats((current) => {
       const next = exchangeItem(current, item);
       if (next === current) {
@@ -367,12 +394,15 @@ export default function App() {
   const handleChallengeBoss = (unitId: string) => {
     const unit = units.find((item) => item.id === unitId);
     if (!unit) return;
+    const status = getBossStatus(unit, progressMap, userStats);
+    if (!status.eligible || status.defeated) {
+      playErrorSound(userStats.soundSettings);
+      window.alert("Boss 还不能挑战：需要本单元学习达到 80%，并且没有到期复习。");
+      return;
+    }
+    playRewardSound(userStats.soundSettings);
+
     updateStats((stats) => {
-      const status = getBossStatus(unit, progressMap, stats);
-      if (!status.eligible || status.defeated) {
-        window.alert("Boss 还不能挑战：需要本单元学习达到 80%，并且没有到期复习。");
-        return stats;
-      }
       return applyReward(
         {
           ...stats,
@@ -395,6 +425,15 @@ export default function App() {
 
   const handleUpdateAudio = (settings: AudioSettings) => {
     updateStats((stats) => ({ ...stats, audioSettings: settings }));
+  };
+
+  const handleUpdateSound = (settings: SoundSettings) => {
+    updateStats((stats) => ({ ...stats, soundSettings: settings }));
+  };
+
+  const continueStudy = () => {
+    const targetUnit = units.find((unit) => unit.words.some((word) => !progressMap[word.id]?.learned && !progressMap[word.id]?.firstLearnedAt)) || units[0];
+    setRoute({ name: "study", unitId: targetUnit.id });
   };
 
   const navigate = (name: RouteName) => setRoute({ name });
@@ -425,7 +464,7 @@ export default function App() {
           loading={auth.loading}
           error={auth.error}
           onRegister={async (username, email, password) => {
-            await auth.register(username, email, password);
+            return await auth.register(username, email, password);
           }}
           onSuccess={() => setRoute({ name: auth.user ? "sync" : "login" })}
           onLogin={() => setRoute({ name: "login" })}
@@ -485,7 +524,9 @@ export default function App() {
           progressMap={progressMap}
           stats={userStats}
           onSignIn={handleSignIn}
+          onContinueStudy={continueStudy}
           onNavigateReview={() => setRoute({ name: "review" })}
+          onNavigateWrongQuiz={() => setRoute({ name: "quiz", quizMode: "wrong" })}
           onNavigateUnits={() => setRoute({ name: "units" })}
           onNavigateCheckIn={() => setRoute({ name: "checkin" })}
           onNavigateMonster={() => setRoute({ name: "monster" })}
@@ -541,7 +582,8 @@ export default function App() {
     }
 
     if (route.name === "quiz") {
-      return <QuizPage title={route.unitId ? `${selectedUnit.name} 测试功能` : "总测试功能"} words={scopeWords} allWords={words} progressMap={progressMap} audioSettings={userStats.audioSettings} onAnswer={answerQuiz} />;
+      const quizTitle = route.quizMode === "wrong" ? "错题强化测试" : route.unitId ? `${selectedUnit.name} 测试功能` : "总测试功能";
+      return <QuizPage title={quizTitle} words={scopeWords} allWords={words} progressMap={progressMap} audioSettings={userStats.audioSettings} onAnswer={answerQuiz} />;
     }
 
     if (route.name === "total") {
@@ -598,6 +640,7 @@ export default function App() {
         <SettingsPage
           stats={userStats}
           onUpdateAudio={handleUpdateAudio}
+          onUpdateSound={handleUpdateSound}
           syncStatus={{
             online: cloudSync.online,
             state: cloudSync.state,
