@@ -15,20 +15,24 @@ type LoginPageProps = {
 
 export function LoginPage({ configured, loading, error, onLogin, onSuccess, onRegister, onGuest }: LoginPageProps) {
   const [message, setMessage] = useState<string | null>(null);
-  const disabledReason = !configured ? "当前线上包未读取到 Supabase 配置，请先配置 GitHub Secrets 并重新部署。你仍可使用游客模式背单词。" : undefined;
+  const disabledReason = !configured ? "配置 Supabase 后可注册账号并跨设备同步。当前为本地模式，登录暂不可用。" : undefined;
 
   const submit = async (email: string, password: string) => {
     if (!configured) {
       setMessage(disabledReason || "当前暂不可用。");
       return;
     }
-    await onLogin(email, password);
-    onSuccess();
+    try {
+      await onLogin(email, password);
+      onSuccess();
+    } catch (nextError) {
+      setMessage(nextError instanceof Error ? nextError.message : "登录失败，请稍后重试。");
+    }
   };
 
   return (
     <div className="mx-auto grid min-h-[calc(100dvh-160px)] max-w-5xl items-center gap-5 lg:grid-cols-[1fr_420px]">
-      <section className="rounded-lg border border-sky-100 bg-white/90 p-5 shadow-soft">
+      <section className="rounded-3xl border border-sky-100 bg-white/90 p-5 shadow-soft">
         <div className="text-xs font-semibold uppercase text-copper">Cloud Account</div>
         <h1 className="mt-2 text-3xl font-semibold text-ink">2027 考研英语记忆系统</h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">登录后可在手机、平板、电脑同步学习进度。未登录时仍可继续游客模式，数据会保存在本地。</p>
@@ -41,7 +45,7 @@ export function LoginPage({ configured, loading, error, onLogin, onSuccess, onRe
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold text-ink">账号登录</h2>
@@ -63,8 +67,12 @@ export function LoginPage({ configured, loading, error, onLogin, onSuccess, onRe
           disabledReason={disabledReason}
           onSubmit={submit}
           onForgotPassword={async (email) => {
-            await requestPasswordReset(email);
-            setMessage("重置邮件已发送，请检查邮箱。");
+            try {
+              await requestPasswordReset(email);
+              setMessage("重置邮件已发送，请检查邮箱。");
+            } catch (nextError) {
+              setMessage(nextError instanceof Error ? nextError.message : "重置失败，请稍后重试。");
+            }
           }}
         />
 

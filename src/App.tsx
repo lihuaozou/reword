@@ -26,12 +26,12 @@ import { units, words } from "./data/words";
 import { useAuth } from "./hooks/useAuth";
 import { useCloudSync } from "./hooks/useCloudSync";
 import { useSoundEffects } from "./hooks/useSoundEffects";
-import type { AppRoute, AudioSettings, ProgressMap, RewardRecord, RouteName, ShopItem, SoundSettings, StudySession, SyncSnapshot, UserStats, WordProgress } from "./types";
+import type { AppRoute, AudioSettings, ProgressMap, RewardRecord, RouteName, ShopItem, SoundSettings, StudySession, SyncSnapshot, UserStats, WordEntry, WordProgress } from "./types";
 import { unlockAvailableAchievements } from "./utils/achievements";
 import { canCheckIn, checkInToday, signInToday } from "./utils/checkin";
 import { getBossStatus } from "./utils/monster";
 import { applyReward } from "./utils/rewards";
-import { appendHistory, createEmptyProgress, exportProgressToJson, getProgress, getUserStats, importProgressFromJson, resetAllProgress, saveProgress, saveUserStats } from "./utils/storage";
+import { appendHistory, createEmptyProgress, exportProgressToJson, getLastStudyPosition, getProgress, getUserStats, importProgressFromJson, resetAllProgress, saveLastStudyPosition, saveProgress, saveUserStats } from "./utils/storage";
 import { addStudySession, getStudyStats } from "./utils/statistics";
 import { exchangeItem } from "./utils/shop";
 import { getWrongWords, isMastered, markAsForgotten, markAsFuzzy, markAsKnown, markAsLearned } from "./utils/scheduler";
@@ -68,6 +68,10 @@ export default function App() {
   const applySyncSnapshot = useCallback((snapshot: SyncSnapshot) => {
     setProgressMap(snapshot.progress);
     setUserStats(snapshot.userStats);
+  }, []);
+
+  const rememberStudyPosition = useCallback((word: WordEntry) => {
+    saveLastStudyPosition(word.unitId, word.id);
   }, []);
 
   const cloudSync = useCloudSync({
@@ -166,8 +170,11 @@ export default function App() {
 
   const learnWord = (wordId: string) => {
     const alreadyLearned = Boolean(progressMap[wordId]?.learned || progressMap[wordId]?.firstLearnedAt);
-    if (alreadyLearned) playClickSound(userStats.soundSettings);
-    else playSuccessSound(userStats.soundSettings);
+    if (alreadyLearned) {
+      playClickSound(userStats.soundSettings);
+      return;
+    }
+    playSuccessSound(userStats.soundSettings);
 
     updateProgress(
       wordId,
@@ -432,6 +439,15 @@ export default function App() {
   };
 
   const continueStudy = () => {
+    const lastPosition = getLastStudyPosition();
+    if (lastPosition && words.some((word) => word.id === lastPosition.wordId)) {
+      const lastUnit = units.find((unit) => unit.id === lastPosition.unitId) || units.find((unit) => unit.words.some((word) => word.id === lastPosition.wordId));
+      if (lastUnit) {
+        setRoute({ name: "study", unitId: lastUnit.id, wordId: lastPosition.wordId });
+        return;
+      }
+    }
+
     const targetUnit = units.find((unit) => unit.words.some((word) => !progressMap[word.id]?.learned && !progressMap[word.id]?.firstLearnedAt)) || units[0];
     setRoute({ name: "study", unitId: targetUnit.id });
   };
@@ -564,7 +580,17 @@ export default function App() {
     }
 
     if (route.name === "study") {
-      return <StudyPage unit={route.unitId ? selectedUnit : undefined} words={scopeWords} progressMap={progressMap} audioSettings={userStats.audioSettings} onLearn={learnWord} />;
+      return (
+        <StudyPage
+          unit={route.unitId ? selectedUnit : undefined}
+          words={scopeWords}
+          progressMap={progressMap}
+          audioSettings={userStats.audioSettings}
+          initialWordId={route.wordId}
+          onLearn={learnWord}
+          onStudyPositionChange={rememberStudyPosition}
+        />
+      );
     }
 
     if (route.name === "recall") {

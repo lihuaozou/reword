@@ -5,21 +5,23 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: "#19212c",
+        ink: "#17212b",
         slateblue: "#334155",
-        paper: "#f8fbff",
-        mist: "#eaf5ff",
-        harbor: "#235a74",
-        copper: "#b86b39",
-        spruce: "#2e6d58",
+        paper: "#fbfaf6",
+        mist: "#e7f3f1",
+        harbor: "#0f6d72",
+        copper: "#d46b4c",
+        spruce: "#2b7a68",
+        saffron: "#f3b23f",
       },
       boxShadow: {
-        soft: "0 1px 0 rgba(25, 33, 44, 0.05), 0 10px 24px rgba(25, 33, 44, 0.06)",
-        lifted: "0 1px 0 rgba(25, 33, 44, 0.08), 0 8px 16px rgba(25, 33, 44, 0.10)",
+        soft: "0 1px 0 rgba(23, 33, 43, 0.05), 0 16px 38px rgba(23, 33, 43, 0.08)",
+        lifted: "0 1px 0 rgba(23, 33, 43, 0.08), 0 22px 50px rgba(23, 33, 43, 0.14)",
+        dock: "0 -14px 44px rgba(23, 33, 43, 0.16)",
       },
       fontFamily: {
-        sans: ["Noto Sans SC", "Microsoft YaHei", "Segoe UI", "sans-serif"],
-        display: ["Georgia", "Times New Roman", "Noto Serif SC", "serif"],
+        sans: ["Avenir Next", "Noto Sans SC", "Microsoft YaHei", "Segoe UI", "sans-serif"],
+        display: ["Noto Serif SC", "Songti SC", "Georgia", "serif"],
       },
     },
   },

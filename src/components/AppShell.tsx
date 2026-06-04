@@ -1,4 +1,4 @@
-import { BookMarked } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 import type { RouteName, UserProfile } from "../types";
@@ -24,15 +24,15 @@ export function AppShell({ current, onNavigate, user = null, profile = null, chi
       <DesktopSidebar current={current} onNavigate={onNavigate} />
       <TabletSidebar current={current} onNavigate={onNavigate} />
 
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-[#f8fbff]/95 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 bg-paper/75 backdrop-blur-2xl md:hidden">
         <div className="mx-auto flex items-center justify-between px-4 py-3">
           <button type="button" onClick={() => onNavigate("dashboard")} className="flex items-center gap-3 text-left">
-            <span className="grid h-9 w-9 place-items-center rounded-lg border border-ink/15 bg-ink text-paper">
-              <BookMarked size={20} aria-hidden="true" />
+            <span className="grid h-9 w-9 place-items-center rounded-lg border border-white/70 bg-ink text-paper shadow-sm">
+              <Sparkles size={18} aria-hidden="true" />
             </span>
             <span>
               <span className="block text-lg font-semibold leading-none">Reword</span>
-              <span className="text-xs text-slate-500">2027考研英语红宝书</span>
+              <span className="text-xs font-medium text-slate-500">沉浸式单词记忆</span>
             </span>
           </button>
           <UserMenu user={user} profile={profile} onLogin={() => onNavigate("login")} onAccount={() => onNavigate("account")} />

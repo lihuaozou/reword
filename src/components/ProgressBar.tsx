@@ -15,7 +15,7 @@ export function ProgressBar({ value, max = 100, label }: ProgressBarProps) {
           <span>{percent}%</span>
         </div>
       ) : null}
-      <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+      <div className="h-2 overflow-hidden rounded-full bg-ink/10">
         <div className="h-full rounded-full bg-harbor transition-all duration-500" style={{ width: `${percent}%` }} />
       </div>
     </div>

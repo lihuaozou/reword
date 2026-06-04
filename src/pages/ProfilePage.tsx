@@ -72,6 +72,34 @@ export function ProfilePage({
           </div>
           <div className="flex flex-col items-start gap-2 sm:items-end">
             <CoinDisplay stats={stats} />
+            {syncStatus.configured ? (
+              <SyncStatusBadge
+                configured={syncStatus.configured}
+                online={syncStatus.online}
+                state={syncStatus.state}
+                message={syncStatus.message}
+                lastSyncAt={syncStatus.lastSyncAt}
+                pendingCount={syncStatus.pendingCount}
+              />
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+        <h2 className="text-lg font-semibold text-ink">账号与同步</h2>
+        {!syncStatus.configured ? (
+          <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
+            配置 Supabase 后可注册账号并跨设备同步。
+          </p>
+        ) : null}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <button type="button" onClick={onNavigateAccount} disabled={!syncStatus.configured} className="mode-card disabled:cursor-not-allowed disabled:opacity-45">
+            <Cloud size={20} aria-hidden="true" />
+            <span>账号同步</span>
+          </button>
+          {syncStatus.configured ? (
+          <div className="rounded-2xl border border-slate-200 bg-[#f8fbff] p-3">
             <SyncStatusBadge
               configured={syncStatus.configured}
               online={syncStatus.online}
@@ -81,28 +109,26 @@ export function ProfilePage({
               pendingCount={syncStatus.pendingCount}
             />
           </div>
+          ) : null}
         </div>
       </section>
-
-      <InstallGuideCard compact />
 
       <section className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
         <LevelProgress stats={stats} />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <StatCard label="总学习时长" value={formatDuration(studyStats.totalSeconds)} icon={BarChart3} tone="current" />
-          <StatCard label="连续打卡" value={stats.currentStreak} icon={CalendarCheck2} tone="copper" />
-          <StatCard label="已学词数" value={todayStats.learnedCount} icon={Upload} tone="spruce" />
-          <StatCard label="掌握词数" value={todayStats.masteredCount} icon={Award} tone="slate" />
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+          <h2 className="text-lg font-semibold text-ink">学习统计</h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <StatCard label="总学习时长" value={formatDuration(studyStats.totalSeconds)} icon={BarChart3} tone="current" />
+            <StatCard label="连续打卡" value={stats.currentStreak} icon={CalendarCheck2} tone="copper" />
+            <StatCard label="已学词数" value={todayStats.learnedCount} icon={Upload} tone="spruce" />
+            <StatCard label="掌握词数" value={todayStats.masteredCount} icon={Award} tone="slate" />
+          </div>
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-        <h2 className="text-lg font-semibold text-ink">功能入口</h2>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <button type="button" onClick={onNavigateCheckIn} className="mode-card">
-            <CalendarCheck2 size={20} aria-hidden="true" />
-            <span>打卡中心</span>
-          </button>
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+        <h2 className="text-lg font-semibold text-ink">奖励与成就</h2>
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <button type="button" onClick={onNavigateRewards} className="mode-card">
             <Gift size={20} aria-hidden="true" />
             <span>奖励记录</span>
@@ -111,27 +137,38 @@ export function ProfilePage({
             <ShoppingBag size={20} aria-hidden="true" />
             <span>兑换商店</span>
           </button>
-          <button type="button" onClick={onNavigateStatistics} className="mode-card">
-            <BarChart3 size={20} aria-hidden="true" />
-            <span>学习统计</span>
-          </button>
           <button type="button" onClick={onNavigateAchievements} className="mode-card">
             <Award size={20} aria-hidden="true" />
             <span>成就徽章</span>
+          </button>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+        <h2 className="text-lg font-semibold text-ink">设置</h2>
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <button type="button" onClick={onNavigateCheckIn} className="mode-card">
+            <CalendarCheck2 size={20} aria-hidden="true" />
+            <span>打卡中心</span>
+          </button>
+          <button type="button" onClick={onNavigateStatistics} className="mode-card">
+            <BarChart3 size={20} aria-hidden="true" />
+            <span>学习统计</span>
           </button>
           <button type="button" onClick={onNavigateSettings} className="mode-card">
             <Settings size={20} aria-hidden="true" />
             <span>设置</span>
           </button>
-          <button type="button" onClick={onNavigateAccount} className="mode-card">
-            <Cloud size={20} aria-hidden="true" />
-            <span>账号同步</span>
-          </button>
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-        <h2 className="text-lg font-semibold text-ink">进度管理</h2>
+      <section className="space-y-3">
+        <h2 className="px-1 text-lg font-semibold text-ink">APK 安装</h2>
+        <InstallGuideCard compact />
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+        <h2 className="text-lg font-semibold text-ink">数据管理</h2>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <button type="button" onClick={onExport} className="btn-secondary">
             <Download size={18} aria-hidden="true" />

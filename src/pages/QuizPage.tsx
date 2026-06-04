@@ -118,7 +118,7 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
 
   if (isMobile) {
     return (
-      <div className="min-h-[calc(100dvh-136px)] space-y-2 pb-20">
+      <div className="min-h-[calc(100dvh-136px)] space-y-2 overflow-x-hidden pb-36">
         <div className="flex h-8 items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="text-xs font-semibold uppercase text-copper">Quiz</div>
@@ -133,7 +133,7 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
           <div className="h-full rounded-full bg-harbor" style={{ width: `${Math.min(100, ((index + 1) / questions.length) * 100)}%` }} />
         </div>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-soft">
+        <section className="rounded-3xl border border-slate-200 bg-white p-3 shadow-soft">
           <div className="pb-3 pt-2 text-center">
             <div className={`break-words font-semibold leading-tight text-ink ${question.word.word.length > 12 ? "text-2xl" : "text-[32px]"}`}>{question.word.word}</div>
             <div className="mt-1 text-xs text-slate-500">{question.word.phonetic}</div>
@@ -153,7 +153,7 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
                   type="button"
                   data-sound="none"
                   onClick={() => choose(option)}
-                  className={`flex min-h-12 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-[13px] font-semibold leading-snug transition ${
+                  className={`flex min-h-12 items-center justify-between gap-2 rounded-2xl border px-3 py-2 text-left text-[13px] font-semibold leading-snug transition active:scale-[0.99] ${
                     answered && isAnswer
                       ? "border-emerald-500 bg-emerald-50 text-emerald-700"
                       : answered && active
@@ -170,12 +170,18 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
           </div>
 
           {answered ? (
-            <div className={`mt-2 rounded-lg px-3 py-2 text-[13px] font-semibold leading-snug ${correct ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+            <div className={`mt-2 rounded-2xl px-3 py-2 text-[13px] font-semibold leading-snug ${correct ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
               {correct ? "回答正确，阶段会向前推进。" : `回答错误：${question.answer}`}
             </div>
           ) : null}
 
-          <button type="button" onClick={nextQuestion} disabled={!answered} className="btn-primary mt-2 h-11 min-h-0 w-full disabled:opacity-40">
+          <button
+            type="button"
+            onClick={nextQuestion}
+            disabled={!answered}
+            className="btn-primary fixed inset-x-3 z-40 h-12 min-h-0 disabled:opacity-40"
+            style={{ bottom: "calc(78px + env(safe-area-inset-bottom))" }}
+          >
             下一题
           </button>
         </section>

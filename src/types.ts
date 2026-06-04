@@ -219,6 +219,7 @@ export type RouteName =
 export type AppRoute = {
   name: RouteName;
   unitId?: string;
+  wordId?: string;
   dueOnly?: boolean;
   quizMode?: "wrong";
 };

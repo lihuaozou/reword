@@ -8,19 +8,20 @@ type ParseOptions = {
 };
 
 const wordLinePattern = /^\s*(\d+)\.\s+\*\*(.+?)\*\*\s+(\/.+\/)\s*$/;
-const bareWordLinePattern = /^\s*([A-Za-z][A-Za-z'’.-]*(?:\s+[A-Za-z][A-Za-z'’.-]*)?)\s+(\/[^/]+\/)\s*$/;
+const bareWordLinePattern = /^\s*([A-Za-z][A-Za-z'’-]*(?:\s+[A-Za-z][A-Za-z'’-]*)?)\s+(\/[^/]+\/)\s*$/;
 const definitionPattern = /^((?:[a-z]+\.)+(?:\s+[a-z]+\.)*)\s+(.+)$/i;
 
 function normalizeUnitName(markdown: string, fallback: string) {
   const heading = markdown.match(/^#{1,3}\s+(.+)$/m)?.[1]?.trim();
-  const match = heading?.match(/(必考词)\s*Unit\s*(\d+)/i);
+  const match = heading?.match(/(必备词|必考词)\s*Unit\s*(\d+)/i);
   if (match) return `${match[1]} Unit${match[2]}`;
-  return heading?.replace(/\s*\d+\s*词\s*$/, "").trim() || fallback;
+  return fallback;
 }
 
 function expectedCount(markdown: string) {
-  const count = markdown.match(/^#{1,3}\s+.+?(\d+)\s*词/m)?.[1];
-  return count ? Number(count) : undefined;
+  const heading = markdown.match(/^#{1,3}\s+(.+)$/m)?.[1] || "";
+  const numbers = [...heading.matchAll(/\d+/g)].map((match) => Number(match[0]));
+  return numbers.length ? numbers[numbers.length - 1] : undefined;
 }
 
 function parseDefinitions(lines: string[]): Definition[] {

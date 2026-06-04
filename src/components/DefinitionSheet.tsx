@@ -15,8 +15,8 @@ export function DefinitionSheet({ open, onClose, word, phonetic, definitions, bo
 
   return (
     <div
-      className="fixed inset-x-3 z-50 rounded-lg border border-slate-200 bg-white p-3 shadow-lifted md:hidden"
-      style={{ bottom: bottomOffset, maxHeight: "42dvh" }}
+      className="fixed inset-x-3 z-50 rounded-3xl border border-slate-200 bg-white p-3 shadow-lifted md:hidden"
+      style={{ bottom: bottomOffset, maxHeight: "45dvh" }}
       role="dialog"
       aria-modal="false"
       aria-label={`${word} 完整释义`}
@@ -31,10 +31,10 @@ export function DefinitionSheet({ open, onClose, word, phonetic, definitions, bo
         </button>
       </div>
 
-      <div className="max-h-[calc(42dvh-64px)] space-y-2 overflow-y-auto pr-1">
+      <div className="max-h-[calc(45dvh-64px)] space-y-2 overflow-y-auto pr-1">
         {definitions.map((definition, index) => (
-          <div key={`${word}-sheet-${index}`} className="flex gap-2 rounded-lg border border-sky-100 bg-[#f8fbff] p-2">
-            <span className="shrink-0 rounded-md bg-white px-2 py-1 text-[12px] font-semibold text-harbor">{definition.pos || "释义"}</span>
+          <div key={`${word}-sheet-${index}`} className="flex gap-2 rounded-2xl border border-sky-100 bg-[#f8fbff] p-2">
+            <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[12px] font-semibold text-harbor">{definition.pos || "释义"}</span>
             <p className="min-w-0 text-[13px] font-semibold leading-snug text-slate-950">{definition.meaning}</p>
           </div>
         ))}

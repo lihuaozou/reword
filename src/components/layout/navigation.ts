@@ -25,7 +25,7 @@ export const primaryNavItems: NavItem[] = [
   { route: "dashboard", label: "首页 Dashboard", shortLabel: "首页", icon: BarChart3 },
   { route: "units", label: "单元学习", shortLabel: "单元", icon: BookOpen },
   { route: "review", label: "今日复习", shortLabel: "复习", icon: RefreshCcw },
-  { route: "monster", label: "打怪闯关", shortLabel: "打怪", icon: Swords },
+  { route: "monster", label: "单词挑战", shortLabel: "挑战", icon: Swords },
   { route: "profile", label: "我的", shortLabel: "我的", icon: UserRound },
 ];
 

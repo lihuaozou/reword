@@ -28,8 +28,8 @@ export function AudioButton({ word, accent, settings, compact = false }: AudioBu
     <button
       type="button"
       onClick={play}
-      className={`inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white font-semibold text-harbor transition hover:border-harbor ${
-        compact ? "h-8 px-2.5 text-xs" : "px-2.5 py-1.5 text-sm"
+      className={`inline-flex items-center justify-center gap-1 rounded-2xl border border-slate-200 bg-white font-semibold text-harbor shadow-sm transition hover:border-harbor active:scale-95 ${
+        compact ? "h-9 px-2.5 text-xs" : "h-10 px-3 text-sm"
       }`}
     >
       <Volume2 size={compact ? 13 : 15} aria-hidden="true" />

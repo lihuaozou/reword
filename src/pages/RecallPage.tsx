@@ -93,7 +93,7 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
           }}
         />
 
-        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
+        <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-soft">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
             <span>S{progress?.stage || 0} · {statusLabel(progress)}</span>
             <span>{formatDateTime(progress?.nextReviewAt)}</span>
@@ -123,16 +123,16 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
           bottomOffset="calc(132px + env(safe-area-inset-bottom))"
         />
 
-        <div className="fixed inset-x-3 z-40 grid grid-cols-3 gap-2" style={{ bottom: "calc(72px + env(safe-area-inset-bottom))" }}>
-          <button type="button" data-sound="none" onClick={() => handleGrade("known")} className="inline-flex h-11 items-center justify-center gap-1 rounded-lg bg-emerald-600 px-2 text-xs font-semibold text-white shadow-sm active:translate-y-px">
+        <div className="fixed inset-x-3 z-40 grid grid-cols-3 gap-2" style={{ bottom: "calc(78px + env(safe-area-inset-bottom))" }}>
+          <button type="button" data-sound="none" onClick={() => handleGrade("known")} className="inline-flex h-12 items-center justify-center gap-1 rounded-2xl bg-emerald-500 px-2 text-xs font-semibold text-white shadow-sm transition active:scale-95">
             <ThumbsUp size={15} aria-hidden="true" />
             记住
           </button>
-          <button type="button" data-sound="none" onClick={() => handleGrade("fuzzy")} className="inline-flex h-11 items-center justify-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-2 text-xs font-semibold text-amber-700 shadow-sm active:translate-y-px">
+          <button type="button" data-sound="none" onClick={() => handleGrade("fuzzy")} className="inline-flex h-12 items-center justify-center gap-1 rounded-2xl border border-amber-300 bg-amber-50 px-2 text-xs font-semibold text-amber-700 shadow-sm transition active:scale-95">
             <RotateCcw size={15} aria-hidden="true" />
             不太熟
           </button>
-          <button type="button" data-sound="none" onClick={() => handleGrade("forgotten")} className="inline-flex h-11 items-center justify-center gap-1 rounded-lg border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 shadow-sm active:translate-y-px">
+          <button type="button" data-sound="none" onClick={() => handleGrade("forgotten")} className="inline-flex h-12 items-center justify-center gap-1 rounded-2xl border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 shadow-sm transition active:scale-95">
             <ThumbsDown size={15} aria-hidden="true" />
             不记住
           </button>

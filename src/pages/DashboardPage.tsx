@@ -1,12 +1,31 @@
-import { BarChart3, BookCheck, CalendarClock, Flame, Gauge, Gift, LibraryBig, ListChecks, LogIn, PlayCircle, ShoppingBag, Swords, Target, TrendingUp } from "lucide-react";
+import {
+  BarChart3,
+  BookCheck,
+  CalendarClock,
+  ChevronRight,
+  Flame,
+  Gauge,
+  Gift,
+  LibraryBig,
+  ListChecks,
+  LogIn,
+  PlayCircle,
+  ShoppingBag,
+  Sparkles,
+  Swords,
+  Target,
+  TrendingUp,
+  Trophy,
+  Zap,
+} from "lucide-react";
 import type { ProgressMap, SyncState, UserStats, WordEntry, WordUnit } from "../types";
 import { CoinDisplay } from "../components/CoinDisplay";
-import { InstallGuideCard } from "../components/InstallGuideCard";
 import { LevelProgress } from "../components/LevelProgress";
 import { ProgressBar } from "../components/ProgressBar";
 import { ReviewTimeline } from "../components/ReviewTimeline";
 import { StatCard } from "../components/StatCard";
 import { SyncStatusBadge } from "../components/auth/SyncStatusBadge";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 import { canCheckIn, getCheckInTasks } from "../utils/checkin";
 import { toLocalDateKey } from "../utils/date";
 import { EXAM_ENGLISH_TARGET, getExamCountdown, getTodayQuote } from "../utils/exam";
@@ -62,7 +81,7 @@ export function DashboardPage({
   const todayStats = calculateTodayStats(words, progressMap);
   const studyStats = getStudyStats(stats);
   const tasks = getCheckInTasks(words, progressMap, stats);
-  const dueWords = getDueWords(words, progressMap).slice(0, 6);
+  const dueWords = getDueWords(words, progressMap).slice(0, 5);
   const today = toLocalDateKey();
   const signed = stats.lastSignInDate === today;
   const checked = stats.lastCheckInDate === today;
@@ -70,81 +89,139 @@ export function DashboardPage({
   const recentRewards = stats.rewardHistory.slice(0, 3);
   const countdown = getExamCountdown();
   const quote = getTodayQuote();
+  const examDate = `${EXAM_ENGLISH_TARGET.getFullYear()}-12-19 14:00`;
+  const completion = todayStats.totalCount ? Math.round((todayStats.masteredCount / todayStats.totalCount) * 100) : 0;
+  const [localSyncTipSeen, setLocalSyncTipSeen] = useLocalStorage("reword-local-sync-tip-seen", false);
+  const showLocalSyncTip = !syncStatus.configured && !localSyncTipSeen;
 
   return (
-    <div className="space-y-5">
-      <section className="hero-panel relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[linear-gradient(90deg,rgba(111,185,219,0.28),rgba(255,255,255,0))]" />
-        <div className="relative max-w-2xl">
-          <div className="mb-3 text-xs font-semibold uppercase text-copper">Seaside Study Desk</div>
-          <h1 className="font-display text-3xl font-semibold leading-tight text-ink md:text-4xl">考研英语倒计时</h1>
-          <div className="mt-3 flex flex-wrap items-end gap-3">
-            <div className="font-display text-6xl font-semibold leading-none text-harbor md:text-7xl">{countdown.days}</div>
-            <div className="pb-2">
-              <div className="text-lg font-semibold text-ink">天 {countdown.hours}小时 {countdown.minutes}分钟</div>
-              <div className="text-sm text-slate-500">预估英语考试：{EXAM_ENGLISH_TARGET.getFullYear()}-12-19 14:00</div>
+    <div className="space-y-5 pb-2">
+      <section className="relative min-h-[520px] overflow-hidden rounded-lg app-hero-wallpaper p-4 shadow-lifted sm:min-h-[560px] md:p-6">
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(251,250,246,0.82)_0%,rgba(251,250,246,0.46)_38%,rgba(23,33,43,0.24)_100%)]" />
+        <div className="relative flex h-full min-h-[488px] flex-col justify-between gap-6 sm:min-h-[528px]">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="inline-flex items-center gap-1.5 rounded-lg border border-white/70 bg-white/70 px-3 py-1 text-xs font-semibold text-harbor backdrop-blur">
+                <Sparkles size={14} aria-hidden="true" />
+                Focus Studio
+              </div>
+              <h1 className="mt-4 max-w-[12ch] font-display text-4xl font-semibold leading-[1.08] text-ink sm:text-5xl">考研英语倒计时</h1>
             </div>
-          </div>
-          <div className="mt-4 rounded-lg border border-sky-100 bg-white/80 p-3 text-sm font-semibold leading-6 text-slate-700">{quote}</div>
-          <div className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-3">
-            <div className="rounded-lg border border-sky-100 bg-white/90 px-3 py-2">
-              <span className="block text-xs text-slate-400">必备单元</span>
-              <span className="font-semibold text-ink">{units.length}</span>
-            </div>
-            <div className="rounded-lg border border-sky-100 bg-white/90 px-3 py-2">
-              <span className="block text-xs text-slate-400">词量</span>
-              <span className="font-semibold text-ink">{words.length}</span>
-            </div>
-            <button type="button" onClick={onNavigateStatistics} className="rounded-lg border border-sky-100 bg-white/90 px-3 py-2 text-left transition hover:border-harbor hover:text-harbor">
-              <span className="block text-xs text-slate-400">今日时长</span>
-              <span className="font-semibold text-ink">{formatDuration(studyStats.todaySeconds)}</span>
-            </button>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <SyncStatusBadge
-              configured={syncStatus.configured}
-              online={syncStatus.online}
-              state={syncStatus.state}
-              message={syncStatus.message}
-              lastSyncAt={syncStatus.lastSyncAt}
-              pendingCount={syncStatus.pendingCount}
-            />
-            <button type="button" onClick={syncStatus.isLoggedIn ? onNavigateAccount : onNavigateLogin} className="btn-secondary min-h-8 px-3 py-1.5 text-xs">
+            <button
+              type="button"
+              onClick={syncStatus.isLoggedIn ? onNavigateAccount : onNavigateLogin}
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-white/80 bg-white/75 px-3 text-xs font-semibold text-ink shadow-sm backdrop-blur transition hover:bg-white"
+            >
               <LogIn size={15} aria-hidden="true" />
-              {syncStatus.isLoggedIn ? "账号同步" : "登录同步"}
+              {syncStatus.isLoggedIn ? "同步" : "登录"}
             </button>
           </div>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button type="button" onClick={onContinueStudy} className="btn-primary">
-              <PlayCircle size={18} aria-hidden="true" />
-              继续学习
-            </button>
-            <button type="button" onClick={onNavigateReview} className="btn-secondary">
-              <CalendarClock size={18} aria-hidden="true" />
-              开始今日复习
-            </button>
-            <button type="button" onClick={onNavigateWrongQuiz} className="btn-secondary">
-              <ListChecks size={18} aria-hidden="true" />
-              错题强化
-            </button>
-            <button type="button" onClick={onNavigateUnits} className="btn-secondary">
-              <LibraryBig size={18} aria-hidden="true" />
-              进入单元
-            </button>
+
+          <div className="grid gap-3 md:grid-cols-[1fr_280px] md:items-end">
+            <div className="glass-panel p-4">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="font-display text-7xl font-semibold leading-none text-ink">{countdown.days}</div>
+                <div className="pb-2">
+                  <div className="text-lg font-semibold text-ink">天 {countdown.hours}小时 {countdown.minutes}分钟</div>
+                  <div className="text-sm font-medium text-slate-500">预计英语考试：{examDate}</div>
+                </div>
+              </div>
+              <p className="mt-4 rounded-lg bg-ink/10 px-3 py-2 text-sm font-semibold leading-6 text-slate-700">{quote}</p>
+            </div>
+
+            <div className="glass-panel p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-medium text-slate-500">掌握进度</div>
+                  <div className="mt-1 text-5xl font-semibold leading-none text-harbor">{completion}%</div>
+                </div>
+                <CoinDisplay stats={stats} />
+              </div>
+              <div className="mt-4">
+                <ProgressBar value={todayStats.masteredCount} max={todayStats.totalCount} label={`${todayStats.masteredCount}/${todayStats.totalCount} 已掌握`} />
+              </div>
+            </div>
           </div>
         </div>
-        <div className="hero-meter relative">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-sm text-slate-500">掌握进度</div>
-              <div className="mt-2 text-5xl font-semibold text-harbor">{todayStats.progressPercent}%</div>
-            </div>
-            <CoinDisplay stats={stats} />
+      </section>
+
+      {showLocalSyncTip ? (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50/90 p-3 text-sm leading-6 text-amber-800 shadow-soft">
+          <div className="flex items-start justify-between gap-3">
+            <p className="font-medium">当前为本地模式，学习数据仅保存在本设备。</p>
+            <button type="button" onClick={() => setLocalSyncTipSeen(true)} className="shrink-0 rounded-full border border-amber-300 bg-white/80 px-2.5 py-1 text-xs font-semibold text-amber-800">
+              知道了
+            </button>
           </div>
-          <div className="mt-4">
-            <ProgressBar value={todayStats.masteredCount} max={todayStats.totalCount} label={`${todayStats.masteredCount}/${todayStats.totalCount}`} />
+        </section>
+      ) : null}
+
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <button type="button" onClick={onContinueStudy} className="group glass-panel flex min-h-24 items-center justify-between gap-3 p-4 text-left transition hover:-translate-y-0.5 hover:bg-white/90">
+          <span>
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-ink text-white">
+              <PlayCircle size={20} aria-hidden="true" />
+            </span>
+            <span className="mt-3 block text-lg font-semibold text-ink">继续学习</span>
+            <span className="mt-1 block text-sm font-medium text-slate-500">从上次停下的单元开始</span>
+          </span>
+          <ChevronRight className="text-slate-400 transition group-hover:translate-x-1 group-hover:text-ink" size={22} aria-hidden="true" />
+        </button>
+        <button type="button" onClick={onNavigateReview} className="group glass-panel flex min-h-24 items-center justify-between gap-3 p-4 text-left transition hover:-translate-y-0.5 hover:bg-white/90">
+          <span>
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-harbor text-white">
+              <CalendarClock size={20} aria-hidden="true" />
+            </span>
+            <span className="mt-3 block text-lg font-semibold text-ink">今日复习</span>
+            <span className="mt-1 block text-sm font-medium text-slate-500">{todayStats.dueCount} 个单词到期</span>
+          </span>
+          <ChevronRight className="text-slate-400 transition group-hover:translate-x-1 group-hover:text-harbor" size={22} aria-hidden="true" />
+        </button>
+        <button type="button" onClick={onNavigateWrongQuiz} className="group glass-panel flex min-h-24 items-center justify-between gap-3 p-4 text-left transition hover:-translate-y-0.5 hover:bg-white/90">
+          <span>
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-copper text-white">
+              <ListChecks size={20} aria-hidden="true" />
+            </span>
+            <span className="mt-3 block text-lg font-semibold text-ink">错题强化</span>
+            <span className="mt-1 block text-sm font-medium text-slate-500">{todayStats.wrongCount} 个薄弱点</span>
+          </span>
+          <ChevronRight className="text-slate-400 transition group-hover:translate-x-1 group-hover:text-copper" size={22} aria-hidden="true" />
+        </button>
+        <button type="button" onClick={onNavigateUnits} className="group glass-panel flex min-h-24 items-center justify-between gap-3 p-4 text-left transition hover:-translate-y-0.5 hover:bg-white/90">
+          <span>
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-saffron text-ink">
+              <LibraryBig size={20} aria-hidden="true" />
+            </span>
+            <span className="mt-3 block text-lg font-semibold text-ink">单元词库</span>
+            <span className="mt-1 block text-sm font-medium text-slate-500">{units.length} 个单元 / {words.length} 词</span>
+          </span>
+          <ChevronRight className="text-slate-400 transition group-hover:translate-x-1 group-hover:text-ink" size={22} aria-hidden="true" />
+        </button>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[1fr_0.95fr]">
+        <LevelProgress stats={stats} />
+        <div className="glass-panel p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="font-semibold text-ink">今日最小任务</h2>
+            <button type="button" onClick={onNavigateCheckIn} className="text-sm font-semibold text-harbor">
+              打卡中心
+            </button>
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {tasks.map((task) => (
+              <div key={task.id} className="rounded-lg border border-ink/10 bg-paper/80 p-3">
+                <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+                  <span className="font-semibold text-ink">{task.title}</span>
+                  <span className="font-medium text-slate-500">
+                    {Math.min(task.current, task.target)}/{task.target}
+                  </span>
+                </div>
+                <ProgressBar value={task.current} max={task.target} label={task.reward} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <button type="button" onClick={onSignIn} disabled={signed} data-sound="none" className="btn-secondary min-h-10 disabled:opacity-45">
               <Gift size={17} aria-hidden="true" />
               {signed ? "已签到" : "签到"}
@@ -153,33 +230,6 @@ export function DashboardPage({
               <Target size={17} aria-hidden="true" />
               {checked ? "已打卡" : readyToCheckIn ? "去打卡" : "看任务"}
             </button>
-          </div>
-        </div>
-      </section>
-
-      <InstallGuideCard compact />
-
-      <section className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-        <LevelProgress stats={stats} />
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="font-semibold text-ink">今日打卡条件</h2>
-            <button type="button" onClick={onNavigateCheckIn} className="text-sm font-semibold text-harbor">
-              打卡中心
-            </button>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {tasks.map((task) => (
-              <div key={task.id} className="rounded-lg border border-sky-100 bg-[#f8fbff] p-3">
-                <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-                  <span className="font-semibold text-ink">{task.title}</span>
-                  <span className="text-slate-500">
-                    {Math.min(task.current, task.target)}/{task.target}
-                  </span>
-                </div>
-                <ProgressBar value={task.current} max={task.target} label={task.reward} />
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -195,9 +245,9 @@ export function DashboardPage({
         <StatCard label="错题词" value={todayStats.wrongCount} icon={ListChecks} tone="current" />
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <ReviewTimeline />
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+        <section className="glass-panel p-5">
           <div className="mb-4 flex items-center justify-between gap-4">
             <h2 className="text-lg font-semibold text-ink">最近需要复习</h2>
             <button type="button" onClick={onNavigateReview} className="text-sm font-semibold text-harbor">
@@ -207,23 +257,23 @@ export function DashboardPage({
           <div className="space-y-3">
             {dueWords.length ? (
               dueWords.map((word) => (
-                <div key={word.id} className="flex items-center justify-between gap-3 rounded-lg border border-sky-100 bg-[#f8fbff] p-3">
+                <div key={word.id} className="flex items-center justify-between gap-3 rounded-lg border border-ink/10 bg-paper/80 p-3">
                   <div className="min-w-0">
                     <div className="truncate font-semibold text-ink">{word.word}</div>
-                    <div className="text-xs text-slate-500">{word.unitName}</div>
+                    <div className="text-xs font-medium text-slate-500">{word.unitName}</div>
                   </div>
-                  <div className="shrink-0 text-xs text-copper">{formatDateTime(progressMap[word.id]?.nextReviewAt)}</div>
+                  <div className="shrink-0 text-xs font-semibold text-copper">{formatDateTime(progressMap[word.id]?.nextReviewAt)}</div>
                 </div>
               ))
             ) : (
-              <p className="rounded-lg border border-sky-100 bg-[#f8fbff] p-4 text-sm leading-6 text-slate-500">现在没有到期词，可以进入单元继续初学。</p>
+              <p className="rounded-lg border border-ink/10 bg-paper/80 p-4 text-sm leading-6 text-slate-500">现在没有到期词，可以进入单元继续初学。</p>
             )}
           </div>
         </section>
       </div>
 
       <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+        <div className="glass-panel p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="font-semibold text-ink">快捷入口</h2>
             <button type="button" onClick={onNavigateShop} className="inline-flex items-center gap-1 text-sm font-semibold text-harbor">
@@ -234,29 +284,49 @@ export function DashboardPage({
           <div className="grid gap-3 sm:grid-cols-2">
             <button type="button" onClick={onNavigateMonster} className="mode-card">
               <Swords size={20} aria-hidden="true" />
-              <span>单词打怪</span>
+              <span>单词挑战</span>
             </button>
             <button type="button" onClick={onNavigateStatistics} className="mode-card">
               <BarChart3 size={20} aria-hidden="true" />
               <span>学习统计</span>
             </button>
           </div>
+          {syncStatus.configured || syncStatus.isLoggedIn ? (
+          <div className="mt-4">
+            <SyncStatusBadge
+              configured={syncStatus.configured}
+              online={syncStatus.online}
+              state={syncStatus.state}
+              message={syncStatus.message}
+              lastSyncAt={syncStatus.lastSyncAt}
+              pendingCount={syncStatus.pendingCount}
+            />
+          </div>
+          ) : null}
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <h2 className="font-semibold text-ink">最新奖励</h2>
+        <div className="glass-panel p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-semibold text-ink">最新奖励</h2>
+            <span className="inline-flex items-center gap-1 rounded-lg bg-saffron/20 px-2.5 py-1 text-xs font-semibold text-ink">
+              <Trophy size={14} aria-hidden="true" />
+              XP
+            </span>
+          </div>
           <div className="mt-4 space-y-3">
             {recentRewards.length ? (
               recentRewards.map((reward) => (
-                <div key={reward.id} className="flex items-center justify-between gap-3 rounded-lg border border-sky-100 bg-[#f8fbff] p-3">
+                <div key={reward.id} className="flex items-center justify-between gap-3 rounded-lg border border-ink/10 bg-paper/80 p-3">
                   <div>
                     <div className="font-semibold text-ink">{reward.title}</div>
-                    <div className="text-xs text-slate-500">{reward.description}</div>
+                    <div className="text-xs font-medium text-slate-500">{reward.description}</div>
                   </div>
-                  <div className="shrink-0 text-sm font-semibold text-harbor">+{reward.xp} XP</div>
+                  <div className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-harbor">
+                    <Zap size={15} aria-hidden="true" />+{reward.xp}
+                  </div>
                 </div>
               ))
             ) : (
-              <p className="rounded-lg border border-sky-100 bg-[#f8fbff] p-4 text-sm text-slate-500">还没有奖励记录，先签到或学一个新词。</p>
+              <p className="rounded-lg border border-ink/10 bg-paper/80 p-4 text-sm text-slate-500">还没有奖励记录，先签到或学一个新词。</p>
             )}
           </div>
         </div>

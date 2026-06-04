@@ -13,25 +13,29 @@ type RegisterPageProps = {
 
 export function RegisterPage({ configured, loading, error, onRegister, onSuccess, onLogin }: RegisterPageProps) {
   const [message, setMessage] = useState<string | null>(null);
-  const disabledReason = !configured ? "当前线上包未读取到 Supabase 配置，请先配置 GitHub Secrets 并重新部署。你仍可使用游客模式背单词。" : undefined;
+  const disabledReason = !configured ? "配置 Supabase 后可注册账号并跨设备同步。当前为本地模式，注册暂不可用。" : undefined;
 
   const submit = async (username: string, email: string, password: string) => {
     if (!configured) {
       setMessage(disabledReason || "当前暂不可用。");
       return;
     }
-    const result = await onRegister(username, email, password);
-    if (result.session) {
-      setMessage("注册成功，已登录。");
-      onSuccess();
-      return;
+    try {
+      const result = await onRegister(username, email, password);
+      if (result.session) {
+        setMessage("注册成功，已登录。");
+        onSuccess();
+        return;
+      }
+      setMessage("注册成功，请先到邮箱完成验证，然后回到登录页登录。");
+    } catch (nextError) {
+      setMessage(nextError instanceof Error ? nextError.message : "注册失败，请稍后重试。");
     }
-    setMessage("注册成功，请先到邮箱完成验证，然后回到登录页登录。");
   };
 
   return (
     <div className="mx-auto max-w-xl">
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div>
             <div className="text-xs font-semibold uppercase text-copper">Register</div>

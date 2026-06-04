@@ -3,6 +3,14 @@ import { toLocalDateKey } from "./date";
 
 const STORAGE_KEY = "reword-progress-v1";
 const USER_STATS_KEY = "reword-user-stats-v1";
+const LAST_STUDY_KEY = "reword-last-study-v1";
+
+export type LastStudyPosition = {
+  routeName: "study";
+  unitId: string;
+  wordId: string;
+  updatedAt: string;
+};
 
 export function createEmptyProgress(wordId: string): WordProgress {
   return {
@@ -66,6 +74,31 @@ export function resetAllProgress() {
   if (!canUseStorage()) return;
   window.localStorage.removeItem(STORAGE_KEY);
   window.localStorage.removeItem(USER_STATS_KEY);
+  window.localStorage.removeItem(LAST_STUDY_KEY);
+}
+
+export function getLastStudyPosition(): LastStudyPosition | null {
+  if (!canUseStorage()) return null;
+  const raw = window.localStorage.getItem(LAST_STUDY_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as LastStudyPosition;
+    if (parsed?.routeName === "study" && parsed.unitId && parsed.wordId) return parsed;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveLastStudyPosition(unitId: string, wordId: string) {
+  if (!canUseStorage()) return;
+  const payload: LastStudyPosition = {
+    routeName: "study",
+    unitId,
+    wordId,
+    updatedAt: new Date().toISOString(),
+  };
+  window.localStorage.setItem(LAST_STUDY_KEY, JSON.stringify(payload));
 }
 
 export function exportProgressToJson() {

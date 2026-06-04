@@ -8,8 +8,8 @@ type MobileBottomNavProps = {
 
 export function MobileBottomNav({ current, onNavigate }: MobileBottomNavProps) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-[#f8fbff]/95 px-2 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 shadow-[0_-8px_20px_rgba(25,33,44,0.06)] backdrop-blur md:hidden">
-      <div className="mx-auto grid max-w-xl grid-cols-5 gap-1">
+    <nav className="nav-dock fixed inset-x-0 bottom-0 z-40 px-3 pt-2 md:hidden">
+      <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 rounded-lg border border-white/80 bg-ink/90 p-1.5 shadow-dock backdrop-blur-2xl">
         {primaryNavItems.map((item) => {
           const Icon = item.icon;
           const active = isRouteActive(current, item.route);
@@ -18,8 +18,8 @@ export function MobileBottomNav({ current, onNavigate }: MobileBottomNavProps) {
               key={item.route}
               type="button"
               onClick={() => onNavigate(item.route)}
-              className={`grid min-h-12 place-items-center rounded-lg border text-xs transition ${
-                active ? "border-indigo-200 bg-white text-indigo-600" : "border-transparent text-slate-500 hover:bg-white"
+              className={`grid min-h-12 place-items-center rounded-lg border text-[11px] font-semibold transition ${
+                active ? "border-white/80 bg-white text-ink shadow-sm" : "border-transparent text-white/60 hover:bg-white/10 hover:text-white"
               }`}
               title={item.shortLabel || item.label}
             >

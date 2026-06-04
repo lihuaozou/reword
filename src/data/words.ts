@@ -6,19 +6,6 @@ const markdownModules = import.meta.glob("../../单词文本/分区/*.md", {
   import: "default",
 }) as Record<string, string>;
 
-const chineseNumbers: Record<string, number> = {
-  一: 1,
-  二: 2,
-  三: 3,
-  四: 4,
-  五: 5,
-  六: 6,
-  七: 7,
-  八: 8,
-  九: 9,
-  十: 10,
-};
-
 function basename(path: string) {
   const name = path.split("/").pop() || path;
   return name.replace(/\.[^.]+$/, "");
@@ -27,17 +14,7 @@ function basename(path: string) {
 function numberFromLabel(label: string) {
   const digit = label.match(/\d+/)?.[0];
   if (digit) return Number(digit);
-
-  const chinese = label.match(/[一二三四五六七八九十]+/)?.[0];
-  if (!chinese) return undefined;
-  if (chinese === "十") return 10;
-  if (chinese.startsWith("十")) return 10 + (chineseNumbers[chinese[1]] || 0);
-  if (chinese.endsWith("十")) return (chineseNumbers[chinese[0]] || 1) * 10;
-  if (chinese.includes("十")) {
-    const [tens, ones] = chinese.split("十");
-    return (chineseNumbers[tens] || 1) * 10 + (chineseNumbers[ones] || 0);
-  }
-  return chineseNumbers[chinese];
+  return undefined;
 }
 
 function unitOrderFromSource(path: string, markdown?: string) {
