@@ -23,8 +23,7 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
   const learningLabel = isLearned ? "已学习" : "未学习";
   const wordSizeClass = mobileCompact ? getMobileWordTitleClass(word.word) : getWordTitleClass(word.word);
   const compactWordSizeClass = word.word.length > 18 ? "text-lg md:text-xl" : word.word.length > 14 ? "text-xl md:text-2xl" : "text-2xl";
-  const hasLongDefinition = word.definitions.some((definition) => definition.meaning.length > 42);
-  const shouldFoldDefinitions = mobileCompact && (word.definitions.length > 3 || hasLongDefinition);
+  const shouldFoldDefinitions = mobileCompact && word.definitions.length > 3;
   const visibleDefinitions = shouldFoldDefinitions ? word.definitions.slice(0, 3) : word.definitions;
 
   if (mobileCompact) {
@@ -56,16 +55,16 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
         </div>
 
         <div className="space-y-2.5 p-3.5">
-          {word.memoryTip ? <MemoryTipCard word={word.word} memoryTip={word.memoryTip} definitions={word.definitions} /> : null}
-
           <div className="space-y-2">
             {visibleDefinitions.map((definition, index) => (
               <div key={`${word.id}-compact-def-${index}`} className="flex items-start gap-2.5 rounded-2xl border border-ink/10 bg-white/80 p-2.5 shadow-sm">
                 <span className="shrink-0 rounded-full bg-harbor/10 px-2.5 py-1 text-[12px] font-semibold text-harbor">{definition.pos || "释义"}</span>
-                <p className="line-clamp-2 min-w-0 break-words text-[14px] font-semibold leading-snug text-slate-950">{definition.meaning}</p>
+                <p className="min-w-0 break-words text-[14px] font-semibold leading-snug text-slate-950">{definition.meaning}</p>
               </div>
             ))}
           </div>
+
+          {word.memoryTip ? <MemoryTipCard word={word.word} memoryTip={word.memoryTip} definitions={word.definitions} /> : null}
 
           {shouldFoldDefinitions ? (
             <button type="button" onClick={() => setDefinitionSheetOpen(true)} className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-2xl border border-harbor/15 bg-white/80 px-3 text-xs font-semibold text-harbor shadow-sm">
@@ -112,11 +111,6 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
               </div>
               <h1 className={`word-title whitespace-nowrap break-normal word-break-normal overflow-visible font-display font-semibold tracking-tight text-ink ${wordSizeClass}`}>{word.word}</h1>
               <p className="mt-3 text-xl font-semibold text-slate-600 md:text-2xl">{word.phonetic}</p>
-              {word.memoryTip ? (
-                <div className="mt-4">
-                  <MemoryTipCard word={word.word} memoryTip={word.memoryTip} definitions={word.definitions} />
-                </div>
-              ) : null}
             </div>
             <div className="shrink-0 2xl:w-80 2xl:self-end">
               <WordVisualCard word={word.word} phonetic={word.phonetic} definitions={word.definitions} image={word.image} imagePrompt={word.imagePrompt} visualPrompt={word.visualPrompt} />
@@ -155,6 +149,12 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
             </div>
           ))}
         </div>
+
+        {!compact && word.memoryTip ? (
+          <div className="mt-4">
+            <MemoryTipCard word={word.word} memoryTip={word.memoryTip} definitions={word.definitions} />
+          </div>
+        ) : null}
 
         <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
           <div className="flex items-center gap-2 rounded-2xl border border-ink/10 bg-white/80 px-3 py-2 font-medium text-slate-600">

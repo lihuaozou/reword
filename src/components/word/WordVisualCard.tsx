@@ -89,20 +89,6 @@ function includesAny(text: string, values: string[]) {
   return values.some((value) => text.includes(value));
 }
 
-function getRootHint(word: string) {
-  const normalized = word.toLowerCase();
-  const knownRoots = ["radi", "object", "oblig", "observ", "legal", "protect", "qual", "scen", "theor"];
-  const root = knownRoots.find((item) => normalized.includes(item));
-  if (root) return root;
-
-  const prefix = ["anti", "auto", "bene", "bio", "co", "com", "con", "dis", "ex", "inter", "micro", "pre", "pro", "re", "sub", "trans", "un"].find((item) =>
-    normalized.startsWith(item),
-  );
-  if (prefix) return prefix;
-
-  return normalized.slice(0, Math.min(4, Math.max(2, normalized.length)));
-}
-
 export function getWordVisualMeta(word: string, definitions: Definition[]): WordVisualMeta {
   const meaningText = definitions.map((definition) => definition.meaning).join(" ");
   const fallback = wordMetaFallbacks[word.toLowerCase()];
@@ -195,9 +181,7 @@ export function WordVisualCard({ word, phonetic, definitions, image, compact = f
   const prompt = imagePrompt || visualPrompt || generateWordImagePrompt(word, definitions);
   const hasImage = Boolean(image && !imageFailed);
   const Icon = iconMap[meta.iconType];
-  const initial = word.charAt(0).toUpperCase();
-  const rootHint = getRootHint(word);
-  const heightClass = compact ? (hasImage ? "h-[104px]" : "h-24") : hasImage ? "h-[120px]" : "h-24";
+  const heightClass = compact ? "h-24" : hasImage ? "h-[112px]" : "h-24";
 
   useEffect(() => {
     setImageFailed(false);
@@ -216,18 +200,11 @@ export function WordVisualCard({ word, phonetic, definitions, image, compact = f
         ) : (
           <div className="relative flex h-full items-center gap-3 p-3">
             <MotifDecor motif={meta.motif} />
-            <div className="relative grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-white/75 bg-white/55 font-display text-4xl font-semibold text-ink shadow-soft backdrop-blur">
-              {initial}
+            <div className="relative grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-white/75 bg-white/60 text-harbor shadow-soft backdrop-blur">
+              <Icon size={24} aria-hidden="true" />
             </div>
-            <div className="relative min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-white/70 bg-white/55 text-harbor shadow-sm backdrop-blur">
-                  <Icon size={18} aria-hidden="true" />
-                </span>
-                <span className="truncate text-[11px] font-semibold uppercase text-slate-500">root / {rootHint}</span>
-              </div>
-              <div className="mt-1.5 line-clamp-1 text-base font-semibold leading-tight text-ink">{meta.keyword}</div>
-              {phonetic && !compact ? <div className="mt-1 truncate text-[11px] font-semibold text-slate-500">{phonetic}</div> : null}
+            <div className={`relative min-w-0 flex-1 ${compact ? "" : "pr-16"}`}>
+              <div className="line-clamp-1 text-base font-semibold leading-tight text-ink">{meta.keyword}</div>
             </div>
 
             {!compact ? (
