@@ -2,7 +2,18 @@ import { useEffect } from "react";
 import type { SoundSettings } from "../types";
 import { playClickSound, playSoundEffect, type SoundEffectType } from "../utils/sound";
 
-const soundTypes = new Set(["click", "success", "error", "reward", "toggle"]);
+const soundTypes = new Set([
+  "click",
+  "success",
+  "error",
+  "reward",
+  "toggle",
+  "correct",
+  "wrong",
+  "wordLearned",
+  "monsterDefeated",
+  "levelUp",
+]);
 
 export function useSoundEffects(settings: SoundSettings) {
   useEffect(() => {

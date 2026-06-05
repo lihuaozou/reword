@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "./components/AppShell";
 import { RewardToast } from "./components/RewardToast";
 import { CheckinSuccessModal, type CheckinSuccessSummary } from "./components/motivation/CheckinSuccessModal";
@@ -40,7 +40,7 @@ import { appendHistory, createEmptyProgress, exportProgressToJson, getLastStudyP
 import { addStudySession, getStudyStats } from "./utils/statistics";
 import { exchangeItem } from "./utils/shop";
 import { getWrongWords, isMastered, markAsForgotten, markAsFuzzy, markAsKnown, markAsLearned } from "./utils/scheduler";
-import { playClickSound, playErrorSound, playRewardSound, playSuccessSound, playToggleSound } from "./utils/sound";
+import { playClickSound, playCorrectSound, playLevelUpSound, playMonsterDefeatedSound, playRewardSound, playToggleSound, playWordLearnedSound, playWrongSound } from "./utils/sound";
 
 function downloadJson(json: string) {
   const blob = new Blob([json], { type: "application/json" });
@@ -71,8 +71,20 @@ export default function App() {
   const [launchLastShownDate, setLaunchLastShownDate] = useLocalStorage<string | null>("motivation.lastShownDate", null);
   const [showLaunchMotivation, setShowLaunchMotivation] = useState(false);
   const [checkinSuccess, setCheckinSuccess] = useState<CheckinSuccessSummary | null>(null);
+  const levelSoundRef = useRef(userStats.level);
+  const shouldPlayLevelUpSoundRef = useRef(false);
   const auth = useAuth();
   useSoundEffects(userStats.soundSettings);
+
+  useEffect(() => {
+    const previousLevel = levelSoundRef.current;
+    levelSoundRef.current = userStats.level;
+    if (!shouldPlayLevelUpSoundRef.current || userStats.level <= previousLevel) return;
+
+    shouldPlayLevelUpSoundRef.current = false;
+    const timer = window.setTimeout(() => playLevelUpSound(userStats.soundSettings), 140);
+    return () => window.clearTimeout(timer);
+  }, [userStats.level, userStats.soundSettings.enabled, userStats.soundSettings.volume]);
 
   const applySyncSnapshot = useCallback((snapshot: SyncSnapshot) => {
     setProgressMap(snapshot.progress);
@@ -156,6 +168,7 @@ export default function App() {
     saveUserStats(finalStats);
     cloudSync.queueLocalChange("stats", { source: "stats-update" });
     if (latestRewardChanged(current, finalStats)) setLatestReward(finalStats.rewardHistory[0]);
+    if (finalStats.level > current.level) shouldPlayLevelUpSoundRef.current = true;
     return finalStats;
   };
 
@@ -183,13 +196,21 @@ export default function App() {
     });
   };
 
+  const playCorrectOutcomeSound = (wordId: string, progress: WordProgress) => {
+    if (isMastered(progress) && !userStats.defeatedWordIds.includes(wordId)) {
+      playMonsterDefeatedSound(userStats.soundSettings);
+      return;
+    }
+    playCorrectSound(userStats.soundSettings);
+  };
+
   const learnWord = (wordId: string) => {
     const alreadyLearned = Boolean(progressMap[wordId]?.learned || progressMap[wordId]?.firstLearnedAt);
     if (alreadyLearned) {
       playClickSound(userStats.soundSettings);
       return;
     }
-    playSuccessSound(userStats.soundSettings);
+    playWordLearnedSound(userStats.soundSettings);
 
     updateProgress(
       wordId,
@@ -216,9 +237,10 @@ export default function App() {
 
   const gradeWord = (wordId: string, grade: "known" | "fuzzy" | "forgotten") => {
     const now = new Date();
-    if (grade === "known") playSuccessSound(userStats.soundSettings);
+    const currentProgress = progressMap[wordId] || createEmptyProgress(wordId);
+    if (grade === "known") playCorrectOutcomeSound(wordId, markAsKnown(currentProgress, now));
     else if (grade === "fuzzy") playToggleSound(userStats.soundSettings);
-    else playErrorSound(userStats.soundSettings);
+    else playWrongSound(userStats.soundSettings);
 
     updateProgress(
       wordId,
@@ -276,8 +298,12 @@ export default function App() {
 
   const answerQuiz = (wordId: string, correct: boolean) => {
     const now = new Date();
-    if (correct) playSuccessSound(userStats.soundSettings);
-    else playErrorSound(userStats.soundSettings);
+    const currentProgress = progressMap[wordId] || createEmptyProgress(wordId);
+    if (correct) {
+      playCorrectOutcomeSound(wordId, markAsKnown({ ...currentProgress, correctCount: currentProgress.correctCount + 1 }, now));
+    } else {
+      playWrongSound(userStats.soundSettings);
+    }
 
     updateProgress(
       wordId,
@@ -379,6 +405,7 @@ export default function App() {
       saveUserStats(finalStats);
       cloudSync.queueLocalChange("session", { sessionId: session.id });
       if (latestRewardChanged(current, finalStats)) setLatestReward(finalStats.rewardHistory[0]);
+      if (finalStats.level > current.level) shouldPlayLevelUpSoundRef.current = true;
       return finalStats;
     });
   }, [cloudSync.queueLocalChange]);
@@ -390,7 +417,7 @@ export default function App() {
 
   const handleCheckIn = () => {
     if (!canCheckIn(words, progressMap, userStats)) {
-      playErrorSound(userStats.soundSettings);
+      playWrongSound(userStats.soundSettings);
       window.alert("今日任务还没达成，先学几个新词、复习或完成一次测试。");
       return;
     }
@@ -412,7 +439,7 @@ export default function App() {
 
   const handleExchange = (item: ShopItem) => {
     const preview = exchangeItem(userStats, item);
-    if (preview === userStats) playErrorSound(userStats.soundSettings);
+    if (preview === userStats) playWrongSound(userStats.soundSettings);
     else playRewardSound(userStats.soundSettings);
 
     setUserStats((current) => {
@@ -430,11 +457,11 @@ export default function App() {
     if (!unit) return;
     const status = getBossStatus(unit, progressMap, userStats);
     if (!status.eligible || status.defeated) {
-      playErrorSound(userStats.soundSettings);
+      playWrongSound(userStats.soundSettings);
       window.alert("Boss 还不能挑战：需要本单元学习达到 80%，并且没有到期复习。");
       return;
     }
-    playRewardSound(userStats.soundSettings);
+    playMonsterDefeatedSound(userStats.soundSettings);
 
     updateStats((stats) => {
       return applyReward(

@@ -4,13 +4,17 @@ import type { AudioSettings, ProgressMap, WordEntry } from "../types";
 import { AudioButton } from "../components/AudioButton";
 import { EmptyState } from "../components/EmptyState";
 import { MobileStudyShell } from "../components/layout/MobileStudyShell";
+import { MonsterCard } from "../components/MonsterCard";
 import { ProgressBar } from "../components/ProgressBar";
 import { WordCard } from "../components/WordCard";
+import type { BattleVisualState } from "../data/monsters";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useResponsive } from "../hooks/useResponsive";
 import { playWordAudio } from "../utils/audio";
+import { getWordMonsterHp } from "../utils/monster";
 import { getMotivationByScene, type MotivationSettings } from "../utils/motivation";
 import { createQuizQuestions, type QuizQuestion } from "../utils/quiz";
+import { getMobileWordTitleClass, getWordTitleClass } from "../utils/textSize";
 
 type QuizPageProps = {
   title: string;
@@ -40,6 +44,7 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, m
   const { isMobile } = useResponsive();
   const showWrongMotivation = Boolean(motivationSettings?.enabled !== false && motivationSettings?.wrongAnswerMotivation !== false);
   const wrongQuote = showWrongMotivation && answered && !correct ? getMotivationByScene("wrong_answer", motivationSettings) : null;
+  const battleState: BattleVisualState = !question || !answered ? "idle" : correct ? (getWordMonsterHp(question.word, progressMap) <= 25 ? "defeated" : "hit") : "damaged";
 
   useEffect(() => {
     setQuizWords(words);
@@ -159,12 +164,13 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, m
 
         <section className="rounded-3xl border border-slate-200 bg-white p-3 shadow-soft">
           <div className="pb-3 pt-2 text-center">
-            <div className={`break-words font-semibold leading-tight text-ink ${question.word.word.length > 12 ? "text-2xl" : "text-[32px]"}`}>{question.word.word}</div>
+            <div className={`word-title whitespace-nowrap break-normal word-break-normal overflow-visible font-semibold tracking-tight text-ink ${getMobileWordTitleClass(question.word.word)}`}>{question.word.word}</div>
             <div className="mt-1 text-xs text-slate-500">{question.word.phonetic}</div>
             <div className="mt-2 flex justify-center gap-2">
               <AudioButton word={question.word.word} accent="us" settings={audioSettings} compact />
               <AudioButton word={question.word.word} accent="uk" settings={audioSettings} compact />
             </div>
+            <MonsterCard word={question.word} progressMap={progressMap} state={battleState} compact className="mt-2 text-left" />
           </div>
 
           <div className="grid gap-2">
@@ -247,7 +253,7 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, m
 
           <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
             <div className="py-8 text-center">
-              <div className="break-words text-5xl font-semibold text-ink">{question.word.word}</div>
+              <div className={`word-title whitespace-nowrap break-normal word-break-normal overflow-visible font-semibold tracking-tight text-ink ${getWordTitleClass(question.word.word)}`}>{question.word.word}</div>
               <div className="mt-3 text-xl text-slate-500">{question.word.phonetic}</div>
               <div className="mt-4 flex justify-center gap-2">
                 <AudioButton word={question.word.word} accent="us" settings={audioSettings} />
@@ -321,6 +327,7 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, m
         </section>
 
         <aside className="hidden space-y-4 lg:block">
+          <MonsterCard word={question.word} progressMap={progressMap} state={battleState} />
           <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
             <h2 className="font-semibold text-ink">测试面板</h2>
             <div className="mt-4 grid gap-3 text-sm">

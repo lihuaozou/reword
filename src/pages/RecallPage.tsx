@@ -11,6 +11,7 @@ import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useResponsive } from "../hooks/useResponsive";
 import { playWordAudio } from "../utils/audio";
 import { getDueWords, isDue } from "../utils/scheduler";
+import { getMobileWordTitleClass, getWordTitleClass } from "../utils/textSize";
 import { formatDateTime, statusLabel } from "../utils/view";
 
 type RecallPageProps = {
@@ -122,7 +123,7 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
           </div>
 
           <div className="py-7 text-center">
-            <div className={`break-words font-semibold leading-tight text-ink ${current.word.length > 12 ? "text-3xl" : "text-[34px]"}`}>{current.word}</div>
+            <div className={`word-title whitespace-nowrap break-normal word-break-normal overflow-visible font-semibold tracking-tight text-ink ${getMobileWordTitleClass(current.word)}`}>{current.word}</div>
             <div className="mt-2 text-sm text-slate-500">{current.phonetic}</div>
             <div className="mt-3 flex justify-center gap-2">
               <AudioButton word={current.word} accent="us" settings={audioSettings} compact />
@@ -191,7 +192,7 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
                     active ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-[#f8fbff] hover:text-ink"
                   }`}
                 >
-                  <span className="min-w-0 truncate font-semibold">{word.word}</span>
+                  <span className="min-w-0 truncate whitespace-nowrap font-semibold">{word.word}</span>
                   <span className="shrink-0 text-xs">S{progressMap[word.id]?.stage || 0}</span>
                 </button>
               );
@@ -208,7 +209,7 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
           </div>
 
           <div className="py-10 text-center">
-            <div className="break-words text-5xl font-semibold text-ink">{current.word}</div>
+            <div className={`word-title whitespace-nowrap break-normal word-break-normal overflow-visible font-semibold tracking-tight text-ink ${getWordTitleClass(current.word)}`}>{current.word}</div>
             <div className="mt-3 text-xl text-slate-500">{current.phonetic}</div>
             <div className="mt-4 flex justify-center gap-2">
               <AudioButton word={current.word} accent="us" settings={audioSettings} />

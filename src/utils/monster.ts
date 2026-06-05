@@ -22,7 +22,7 @@ export function getMonsterSummary(words: WordEntry[], progressMap: ProgressMap, 
 }
 
 export function getBossStatus(unit: WordUnit, progressMap: ProgressMap, stats: UserStats) {
-  const learned = unit.words.filter((word) => progressMap[word.id]?.learned).length;
+  const learned = unit.words.filter((word) => progressMap[word.id]?.learned || progressMap[word.id]?.firstLearnedAt).length;
   const learnedPercent = unit.words.length ? Math.round((learned / unit.words.length) * 100) : 0;
   const dueLeft = getDueWords(unit.words, progressMap).length;
   const defeated = stats.defeatedBossIds.includes(unit.id);
@@ -30,7 +30,7 @@ export function getBossStatus(unit: WordUnit, progressMap: ProgressMap, stats: U
   return {
     id: unit.id,
     name: `${unit.name} Boss`,
-    subtitle: `${bossName(unit.order)}·Unit${unit.order}`,
+    subtitle: `${bossName(unit.order)} · Unit${unit.order}`,
     learnedPercent,
     dueLeft,
     defeated,
@@ -40,6 +40,6 @@ export function getBossStatus(unit: WordUnit, progressMap: ProgressMap, stats: U
 }
 
 export function bossName(order: number) {
-  const names = ["遗忘兽", "拖延兽", "混淆兽", "倦怠兽", "焦虑兽", "懒散兽", "粗心兽", "瓶颈兽"];
+  const names = ["遗忘核心", "拖延核心", "混淆核心", "倦怠核心", "焦虑核心", "粗心核心", "长句核心", "复习核心"];
   return names[(order - 1) % names.length];
 }

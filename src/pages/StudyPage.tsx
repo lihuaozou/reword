@@ -190,7 +190,7 @@ export function StudyPage({ unit, words, progressMap, audioSettings, initialWord
                     active ? "bg-ink text-white" : "text-slate-600 hover:bg-white/75 hover:text-ink"
                   }`}
                 >
-                  <span className="min-w-0 truncate font-semibold">{word.word}</span>
+                  <span className="min-w-0 truncate whitespace-nowrap font-semibold">{word.word}</span>
                   <span className="flex shrink-0 items-center gap-1.5 text-xs">
                     <span className={itemLearned ? "rounded-lg bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-700" : "rounded-lg bg-copper/10 px-1.5 py-0.5 font-semibold text-copper"}>
                       {itemLearned ? "已学" : "未学"}

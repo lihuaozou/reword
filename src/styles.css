@@ -94,6 +94,18 @@ input {
     overflow: hidden;
   }
 
+  .word-title {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    line-height: 1;
+  }
+
+  .word-break-normal {
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+  }
+
   .no-scrollbar {
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -175,6 +187,108 @@ input {
   .word-card-swap {
     animation: word-card-swap 180ms ease-out;
   }
+
+  .battle-stage {
+    @apply relative grid place-items-center overflow-hidden rounded-2xl border border-white/80 bg-gradient-to-br from-sky-50 via-indigo-50 to-white shadow-sm;
+  }
+
+  .monster-asset {
+    @apply relative z-10 h-full w-full object-contain p-3 drop-shadow-[0_18px_24px_rgba(15,23,42,0.16)];
+  }
+
+  .monster-fallback {
+    @apply relative z-10 grid h-full w-full place-items-center overflow-hidden;
+  }
+
+  .monster-idle-float {
+    animation: monster-idle-float 3.6s ease-in-out infinite;
+  }
+
+  .monster-defeated {
+    animation: monster-defeat-fade 720ms ease-out both;
+  }
+
+  .boss-intro-pulse {
+    animation: boss-intro-pulse 2.6s ease-in-out infinite;
+  }
+
+  .battle-card {
+    @apply relative overflow-hidden rounded-3xl border border-white/80 bg-white/85 p-4 shadow-soft backdrop-blur-xl transition;
+  }
+
+  .battle-card-compact {
+    @apply flex items-center gap-3 rounded-2xl p-2.5;
+  }
+
+  .battle-card:not(.battle-card-compact) {
+    animation: battle-idle-float 4.8s ease-in-out infinite;
+  }
+
+  .battle-card-compact.battle-state-idle {
+    animation: battle-compact-breathe 4s ease-in-out infinite;
+  }
+
+  .boss-battle-card {
+    @apply relative overflow-hidden rounded-3xl border border-white/80 bg-white/85 p-4 shadow-soft backdrop-blur-xl transition;
+  }
+
+  .battle-state-hit {
+    animation: battle-hit-pop 360ms ease-out;
+  }
+
+  .battle-state-damaged {
+    animation: battle-damaged-shake 420ms ease-out;
+  }
+
+  .battle-card-defeated,
+  .battle-state-defeated,
+  .battle-state-bossDefeated {
+    animation: battle-defeat-soft 680ms ease-out both;
+  }
+
+  .battle-state-bossIntro {
+    animation: battle-boss-intro 720ms ease-out;
+  }
+
+  .battle-effect-layer {
+    @apply pointer-events-none absolute inset-0 z-20 grid place-items-center;
+    animation: battle-effect-pop 520ms ease-out both;
+  }
+
+  .battle-effect-defeated,
+  .battle-effect-bossDefeated {
+    animation-duration: 820ms;
+  }
+
+  .battle-effect-fallback {
+    @apply relative grid h-20 w-20 place-items-center rounded-full border border-sky-100/70 bg-sky-100/40;
+  }
+
+  .battle-effect-fallback span {
+    @apply absolute h-2 w-2 rounded-full bg-saffron;
+    animation: battle-particle-rise 680ms ease-out both;
+  }
+
+  .battle-effect-fallback span:nth-child(2) {
+    @apply bg-harbor;
+    animation-delay: 80ms;
+    transform: translate(-18px, 8px);
+  }
+
+  .battle-effect-fallback span:nth-child(3) {
+    @apply bg-copper;
+    animation-delay: 140ms;
+    transform: translate(18px, 10px);
+  }
+
+  .reward-effect-layer {
+    @apply pointer-events-none absolute left-1/2 top-1/2 z-30 flex items-center gap-2 rounded-2xl border border-white/80 bg-white/90 px-3 py-2 text-sm font-semibold text-ink shadow-lifted backdrop-blur-xl;
+    animation: reward-rise 1100ms ease-out both;
+  }
+
+  .reward-effect-fallback {
+    @apply grid h-14 w-14 place-items-center rounded-full bg-saffron text-xl font-bold text-white shadow-soft;
+  }
 }
 
 @keyframes word-card-swap {
@@ -198,5 +312,204 @@ input {
   }
   70% {
     transform: translateX(3px);
+  }
+}
+
+@keyframes battle-idle-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes battle-compact-breathe {
+  0%,
+  100% {
+    box-shadow: 0 1px 0 rgba(23, 33, 43, 0.05), 0 12px 28px rgba(23, 33, 43, 0.06);
+  }
+  50% {
+    box-shadow: 0 1px 0 rgba(23, 33, 43, 0.08), 0 16px 34px rgba(15, 109, 114, 0.12);
+  }
+}
+
+@keyframes battle-hit-pop {
+  0% {
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+  34% {
+    transform: translateY(-2px) scale(1.025);
+    filter: brightness(1.08);
+  }
+  68% {
+    transform: translateX(2px) scale(0.99);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes battle-damaged-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  24% {
+    transform: translateX(-3px);
+  }
+  52% {
+    transform: translateX(3px);
+  }
+  76% {
+    transform: translateX(-1px);
+  }
+}
+
+@keyframes battle-defeat-soft {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(0.96) translateY(2px);
+  }
+  100% {
+    opacity: 0.82;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes battle-boss-intro {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes monster-idle-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.5deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(0.5deg);
+  }
+}
+
+@keyframes monster-defeat-fade {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: saturate(1);
+  }
+  100% {
+    opacity: 0.44;
+    transform: scale(0.82) translateY(10px);
+    filter: saturate(0.65) blur(0.3px);
+  }
+}
+
+@keyframes boss-intro-pulse {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 14px 22px rgba(79, 70, 229, 0.16));
+  }
+  50% {
+    transform: translateY(-5px) scale(1.035);
+    filter: drop-shadow(0 20px 30px rgba(79, 70, 229, 0.24));
+  }
+}
+
+@keyframes battle-hit-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  28% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes battle-defeat-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.78);
+  }
+  34% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.32);
+  }
+}
+
+@keyframes battle-effect-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.74);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes battle-particle-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.7);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px) scale(1);
+  }
+}
+
+@keyframes reward-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 12px)) scale(0.96);
+  }
+  24% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: translate(-50%, calc(-50% - 8px)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 18px)) scale(0.98);
+  }
+}
+
+@media (max-width: 767px) {
+  .battle-card-compact {
+    max-height: 82px;
   }
 }

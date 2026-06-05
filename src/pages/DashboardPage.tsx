@@ -271,7 +271,7 @@ export function DashboardPage({
               dueWords.map((word) => (
                 <div key={word.id} className="flex items-center justify-between gap-3 rounded-lg border border-ink/10 bg-paper/80 p-3">
                   <div className="min-w-0">
-                    <div className="truncate font-semibold text-ink">{word.word}</div>
+                    <div className="truncate whitespace-nowrap font-semibold text-ink">{word.word}</div>
                     <div className="text-xs font-medium text-slate-500">{word.unitName}</div>
                   </div>
                   <div className="shrink-0 text-xs font-semibold text-copper">{formatDateTime(progressMap[word.id]?.nextReviewAt)}</div>

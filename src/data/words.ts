@@ -1,4 +1,6 @@
 import { parseMarkdownUnit } from "../utils/parser";
+import type { WordUnit } from "../types";
+import { unit1MemoryTips } from "./unit1MemoryTips";
 
 const markdownModules = import.meta.glob("../../单词文本/分区/*.md", {
   eager: true,
@@ -23,14 +25,27 @@ function unitOrderFromSource(path: string, markdown?: string) {
   return numberFromLabel(basename(path)) || 999;
 }
 
+function withMemoryTips(unit: WordUnit): WordUnit {
+  if (unit.id !== "unit1") return unit;
+  return {
+    ...unit,
+    words: unit.words.map((word) => ({
+      ...word,
+      memoryTip: unit1MemoryTips[word.word.toLowerCase()],
+    })),
+  };
+}
+
 export const units = Object.entries(markdownModules)
   .map(([path, markdown]) => {
     const order = unitOrderFromSource(path, markdown);
-    return parseMarkdownUnit(markdown, {
-      unitId: `unit${order}`,
-      unitName: `必备词 Unit${order}`,
-      order,
-    });
+    return withMemoryTips(
+      parseMarkdownUnit(markdown, {
+        unitId: `unit${order}`,
+        unitName: `必备词 Unit${order}`,
+        order,
+      }),
+    );
   })
   .sort((a, b) => a.order - b.order);
 

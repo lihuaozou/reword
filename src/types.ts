@@ -12,6 +12,7 @@ export type WordEntry = {
   phonetic: string;
   definitions: Definition[];
   image?: string;
+  memoryTip?: string;
   imagePrompt?: string;
   visualPrompt?: string;
   example?: string;

@@ -1,9 +1,11 @@
 import { CheckCircle2, Clock3, Eye, Layers3, Sparkles } from "lucide-react";
 import { useState } from "react";
 import type { AudioSettings, WordEntry, WordProgress } from "../types";
+import { getMobileWordTitleClass, getWordTitleClass } from "../utils/textSize";
 import { formatDateTime, statusLabel } from "../utils/view";
 import { AudioButton } from "./AudioButton";
 import { DefinitionSheet } from "./DefinitionSheet";
+import { MemoryTipCard } from "./word/MemoryTipCard";
 import { WordVisualCard } from "./word/WordVisualCard";
 
 type WordCardProps = {
@@ -19,7 +21,8 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
   const isLearned = Boolean(progress?.learned || progress?.firstLearnedAt);
   const learningChipClass = isLearned ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-600";
   const learningLabel = isLearned ? "已学习" : "未学习";
-  const wordSize = word.word.length > 18 ? "text-[30px]" : word.word.length > 12 ? "text-4xl" : "text-5xl";
+  const wordSizeClass = mobileCompact ? getMobileWordTitleClass(word.word) : getWordTitleClass(word.word);
+  const compactWordSizeClass = word.word.length > 18 ? "text-lg md:text-xl" : word.word.length > 14 ? "text-xl md:text-2xl" : "text-2xl";
   const hasLongDefinition = word.definitions.some((definition) => definition.meaning.length > 42);
   const shouldFoldDefinitions = mobileCompact && (word.definitions.length > 3 || hasLongDefinition);
   const visibleDefinitions = shouldFoldDefinitions ? word.definitions.slice(0, 3) : word.definitions;
@@ -28,7 +31,7 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
     return (
       <article className="overflow-hidden rounded-3xl border border-white/80 bg-paper shadow-lifted">
         <div className="study-texture p-3.5">
-          <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="mb-2.5 flex items-center justify-between gap-2">
             <span className="truncate rounded-full border border-harbor/15 bg-white/75 px-2.5 py-1 text-[11px] font-semibold text-harbor shadow-sm">{word.unitName}</span>
             <div className="flex shrink-0 items-center gap-1.5">
               <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${learningChipClass}`}>{learningLabel}</span>
@@ -37,18 +40,10 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
           </div>
 
           <div className="grid gap-2.5">
-            <WordVisualCard
-              word={word.word}
-              phonetic={word.phonetic}
-              definitions={word.definitions}
-              image={word.image}
-              imagePrompt={word.imagePrompt}
-              visualPrompt={word.visualPrompt}
-              compact
-            />
+            <WordVisualCard word={word.word} phonetic={word.phonetic} definitions={word.definitions} image={word.image} imagePrompt={word.imagePrompt} visualPrompt={word.visualPrompt} compact />
 
-            <div>
-              <h1 className={`break-words font-display font-semibold leading-[1.03] text-ink ${wordSize}`}>{word.word}</h1>
+            <div className="min-w-0">
+              <h1 className={`word-title whitespace-nowrap break-normal word-break-normal overflow-visible font-display font-semibold tracking-tight text-ink ${wordSizeClass}`}>{word.word}</h1>
               <div className="mt-1.5 flex items-center justify-between gap-2">
                 <p className="min-w-0 break-words text-[13px] font-semibold text-slate-500">{word.phonetic}</p>
                 <div className="flex shrink-0 gap-1.5">
@@ -61,6 +56,8 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
         </div>
 
         <div className="space-y-2.5 p-3.5">
+          {word.memoryTip ? <MemoryTipCard word={word.word} memoryTip={word.memoryTip} definitions={word.definitions} /> : null}
+
           <div className="space-y-2">
             {visibleDefinitions.map((definition, index) => (
               <div key={`${word.id}-compact-def-${index}`} className="flex items-start gap-2.5 rounded-2xl border border-ink/10 bg-white/80 p-2.5 shadow-sm">
@@ -107,24 +104,22 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
               <span className="text-xs font-semibold text-slate-500">#{word.order}</span>
             </div>
           </div>
-          <div className="grid gap-5 lg:grid-cols-[1fr_220px] lg:items-end">
-            <div>
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+            <div className="min-w-0 flex-1">
               <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-xs font-semibold text-slate-500">
                 <Sparkles size={14} aria-hidden="true" />
                 Memory Focus
               </div>
-              <h1 className="break-words font-display text-5xl font-semibold leading-tight text-ink md:text-6xl">{word.word}</h1>
+              <h1 className={`word-title whitespace-nowrap break-normal word-break-normal overflow-visible font-display font-semibold tracking-tight text-ink ${wordSizeClass}`}>{word.word}</h1>
               <p className="mt-3 text-xl font-semibold text-slate-600 md:text-2xl">{word.phonetic}</p>
+              {word.memoryTip ? (
+                <div className="mt-4">
+                  <MemoryTipCard word={word.word} memoryTip={word.memoryTip} definitions={word.definitions} />
+                </div>
+              ) : null}
             </div>
-            <div className="hidden lg:block">
-              <WordVisualCard
-                word={word.word}
-                phonetic={word.phonetic}
-                definitions={word.definitions}
-                image={word.image}
-                imagePrompt={word.imagePrompt}
-                visualPrompt={word.visualPrompt}
-              />
+            <div className="shrink-0 xl:w-80 xl:self-end">
+              <WordVisualCard word={word.word} phonetic={word.phonetic} definitions={word.definitions} image={word.image} imagePrompt={word.imagePrompt} visualPrompt={word.visualPrompt} />
             </div>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -137,8 +132,8 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
       <div className={compact ? "p-4" : "p-5 md:p-6"}>
         {compact ? (
           <div className="mb-3 flex items-start justify-between gap-3">
-            <div>
-              <h3 className="break-words text-2xl font-semibold text-ink">{word.word}</h3>
+            <div className="min-w-0">
+              <h3 className={`word-title whitespace-nowrap break-normal word-break-normal overflow-visible font-semibold text-ink ${compactWordSizeClass}`}>{word.word}</h3>
               <p className="text-base font-medium text-slate-600">{word.phonetic}</p>
               <div className="mt-2 flex gap-2">
                 <AudioButton word={word.word} accent="us" settings={audioSettings} />

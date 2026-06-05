@@ -23,7 +23,7 @@ export function DefinitionSheet({ open, onClose, word, phonetic, definitions, bo
     >
       <div className="mb-2 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="truncate text-lg font-semibold leading-tight text-ink">{word}</div>
+          <div className="word-title truncate whitespace-nowrap break-normal word-break-normal text-lg font-semibold text-ink">{word}</div>
           {phonetic ? <div className="text-xs text-slate-500">{phonetic}</div> : null}
         </div>
         <button type="button" onClick={onClose} className="icon-btn h-8 w-8" aria-label="关闭释义">
