@@ -38,17 +38,13 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
             </div>
           </div>
 
-          <div className="grid gap-2.5">
-            <WordVisualCard word={word.word} phonetic={word.phonetic} definitions={word.definitions} image={word.image} imagePrompt={word.imagePrompt} visualPrompt={word.visualPrompt} compact />
-
-            <div className="min-w-0">
-              <h1 className={`word-title whitespace-nowrap break-normal word-break-normal overflow-visible font-display font-semibold tracking-tight text-ink ${wordSizeClass}`}>{word.word}</h1>
-              <div className="mt-1.5 flex items-center justify-between gap-2">
-                <p className="min-w-0 break-words text-[13px] font-semibold text-slate-500">{word.phonetic}</p>
-                <div className="flex shrink-0 gap-1.5">
-                  <AudioButton word={word.word} accent="us" settings={audioSettings} compact />
-                  <AudioButton word={word.word} accent="uk" settings={audioSettings} compact />
-                </div>
+          <div className="mt-2 min-w-0">
+            <h1 className={`word-title whitespace-nowrap break-normal word-break-normal overflow-visible font-display font-semibold tracking-tight text-ink ${wordSizeClass}`}>{word.word}</h1>
+            <div className="mt-1.5 flex items-center justify-between gap-2">
+              <p className="min-w-0 break-words text-[13px] font-semibold text-slate-500">{word.phonetic}</p>
+              <div className="flex shrink-0 gap-1.5">
+                <AudioButton word={word.word} accent="us" settings={audioSettings} compact />
+                <AudioButton word={word.word} accent="uk" settings={audioSettings} compact />
               </div>
             </div>
           </div>
