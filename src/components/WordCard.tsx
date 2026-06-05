@@ -1,7 +1,10 @@
-import { CheckCircle2, Clock3, Layers3, Sparkles } from "lucide-react";
+import { CheckCircle2, Clock3, Eye, Layers3, Sparkles } from "lucide-react";
+import { useState } from "react";
 import type { AudioSettings, WordEntry, WordProgress } from "../types";
 import { formatDateTime, statusLabel } from "../utils/view";
 import { AudioButton } from "./AudioButton";
+import { DefinitionSheet } from "./DefinitionSheet";
+import { WordVisualCard } from "./word/WordVisualCard";
 
 type WordCardProps = {
   word: WordEntry;
@@ -12,11 +15,14 @@ type WordCardProps = {
 };
 
 export function WordCard({ word, progress, compact = false, mobileCompact = false, audioSettings }: WordCardProps) {
+  const [definitionSheetOpen, setDefinitionSheetOpen] = useState(false);
   const isLearned = Boolean(progress?.learned || progress?.firstLearnedAt);
   const learningChipClass = isLearned ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-600";
   const learningLabel = isLearned ? "已学习" : "未学习";
   const wordSize = word.word.length > 18 ? "text-[30px]" : word.word.length > 12 ? "text-4xl" : "text-5xl";
-  const initial = word.word.charAt(0).toUpperCase();
+  const hasLongDefinition = word.definitions.some((definition) => definition.meaning.length > 42);
+  const shouldFoldDefinitions = mobileCompact && (word.definitions.length > 3 || hasLongDefinition);
+  const visibleDefinitions = shouldFoldDefinitions ? word.definitions.slice(0, 3) : word.definitions;
 
   if (mobileCompact) {
     return (
@@ -31,18 +37,15 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
           </div>
 
           <div className="grid gap-2.5">
-            <div className="memory-visual relative grid min-h-24 place-items-center overflow-hidden rounded-2xl border border-white/80 shadow-sm">
-              {word.image ? <img src={word.image} alt="" className="h-full w-full object-contain p-3" loading="lazy" /> : null}
-              {!word.image ? (
-                <>
-                  <div className="absolute left-4 top-4 h-10 w-16 rounded-2xl border border-white/70 bg-white/60 rotate-[-8deg]" />
-                  <div className="absolute bottom-4 right-4 h-12 w-20 rounded-2xl border border-white/70 bg-white/60 rotate-[7deg]" />
-                  <div className="relative grid h-20 w-20 place-items-center rounded-full border border-white/80 bg-white/70 font-display text-5xl font-semibold text-harbor shadow-soft backdrop-blur">
-                    {initial}
-                  </div>
-                </>
-              ) : null}
-            </div>
+            <WordVisualCard
+              word={word.word}
+              phonetic={word.phonetic}
+              definitions={word.definitions}
+              image={word.image}
+              imagePrompt={word.imagePrompt}
+              visualPrompt={word.visualPrompt}
+              compact
+            />
 
             <div>
               <h1 className={`break-words font-display font-semibold leading-[1.03] text-ink ${wordSize}`}>{word.word}</h1>
@@ -58,14 +61,21 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
         </div>
 
         <div className="space-y-2.5 p-3.5">
-          <div className="no-scrollbar max-h-44 space-y-2 overflow-y-auto pr-1">
-          {word.definitions.map((definition, index) => (
-            <div key={`${word.id}-compact-def-${index}`} className="flex items-start gap-2.5 rounded-2xl border border-ink/10 bg-white/80 p-2.5 shadow-sm">
-              <span className="shrink-0 rounded-full bg-harbor/10 px-2.5 py-1 text-[12px] font-semibold text-harbor">{definition.pos || "释义"}</span>
-              <p className="min-w-0 break-words text-[15px] font-semibold leading-snug text-slate-950">{definition.meaning}</p>
-            </div>
-          ))}
+          <div className="space-y-2">
+            {visibleDefinitions.map((definition, index) => (
+              <div key={`${word.id}-compact-def-${index}`} className="flex items-start gap-2.5 rounded-2xl border border-ink/10 bg-white/80 p-2.5 shadow-sm">
+                <span className="shrink-0 rounded-full bg-harbor/10 px-2.5 py-1 text-[12px] font-semibold text-harbor">{definition.pos || "释义"}</span>
+                <p className="line-clamp-2 min-w-0 break-words text-[14px] font-semibold leading-snug text-slate-950">{definition.meaning}</p>
+              </div>
+            ))}
           </div>
+
+          {shouldFoldDefinitions ? (
+            <button type="button" onClick={() => setDefinitionSheetOpen(true)} className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-2xl border border-harbor/15 bg-white/80 px-3 text-xs font-semibold text-harbor shadow-sm">
+              <Eye size={14} aria-hidden="true" />
+              查看完整释义
+            </button>
+          ) : null}
 
           <div className="flex flex-wrap gap-1.5 pt-1 text-[11px] font-semibold text-slate-600">
             <span className="rounded-full border border-ink/10 bg-white/80 px-2 py-1">S{progress?.stage || 0}</span>
@@ -73,6 +83,15 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
             <span className="rounded-full border border-ink/10 bg-white/80 px-2 py-1">{formatDateTime(progress?.nextReviewAt)}</span>
           </div>
         </div>
+
+        <DefinitionSheet
+          open={definitionSheetOpen}
+          onClose={() => setDefinitionSheetOpen(false)}
+          word={word.word}
+          phonetic={word.phonetic}
+          definitions={word.definitions}
+          bottomOffset="calc(var(--mobile-bottom-nav-height) + var(--mobile-action-bar-height) + env(safe-area-inset-bottom) + 16px)"
+        />
       </article>
     );
   }
@@ -97,8 +116,15 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
               <h1 className="break-words font-display text-5xl font-semibold leading-tight text-ink md:text-6xl">{word.word}</h1>
               <p className="mt-3 text-xl font-semibold text-slate-600 md:text-2xl">{word.phonetic}</p>
             </div>
-            <div className="memory-visual hidden h-44 place-items-center overflow-hidden rounded-2xl border border-white/80 shadow-sm lg:grid">
-              {word.image ? <img src={word.image} alt="" className="h-full w-full object-contain p-4" loading="lazy" /> : <span className="font-display text-7xl font-semibold text-harbor">{initial}</span>}
+            <div className="hidden lg:block">
+              <WordVisualCard
+                word={word.word}
+                phonetic={word.phonetic}
+                definitions={word.definitions}
+                image={word.image}
+                imagePrompt={word.imagePrompt}
+                visualPrompt={word.visualPrompt}
+              />
             </div>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-2">

@@ -4,6 +4,7 @@ import type { AudioSettings, ProgressMap, WordEntry } from "../types";
 import { AudioButton } from "../components/AudioButton";
 import { DefinitionSheet } from "../components/DefinitionSheet";
 import { EmptyState } from "../components/EmptyState";
+import { MobileStudyShell } from "../components/layout/MobileStudyShell";
 import { ModeTabs } from "../components/ModeTabs";
 import { WordCard } from "../components/WordCard";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
@@ -69,16 +70,37 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
 
   if (isMobile) {
     return (
-      <div className="min-h-[calc(100dvh-136px)] space-y-3 pb-28">
-        <div className="flex items-start justify-between gap-3">
+      <MobileStudyShell
+        header={
+          <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-soft backdrop-blur-xl">
+            <div className="flex min-h-9 items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase text-copper">Recall</div>
-            <h1 className="truncate text-lg font-semibold text-ink">{title}</h1>
+                <h1 className="truncate text-sm font-semibold text-ink">{title}</h1>
+                <div className="text-[11px] font-medium text-slate-500">{mode === "due" ? "到期词" : "全部词"}</div>
           </div>
-          <div className="shrink-0 text-right text-xs text-slate-500">
+              <div className="shrink-0 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-xs font-semibold text-harbor shadow-sm">
             {Math.min(index + 1, activeWords.length)} / {activeWords.length}
           </div>
         </div>
+          </div>
+        }
+        actionBar={
+          <div className="grid grid-cols-3 gap-2">
+            <button type="button" data-sound="none" onClick={() => handleGrade("known")} className="inline-flex h-12 items-center justify-center gap-1 rounded-2xl bg-emerald-500 px-2 text-xs font-semibold text-white shadow-sm transition active:scale-95">
+              <ThumbsUp size={15} aria-hidden="true" />
+              记住
+            </button>
+            <button type="button" data-sound="none" onClick={() => handleGrade("fuzzy")} className="inline-flex h-12 items-center justify-center gap-1 rounded-2xl border border-amber-300 bg-amber-50 px-2 text-xs font-semibold text-amber-700 shadow-sm transition active:scale-95">
+              <RotateCcw size={15} aria-hidden="true" />
+              不太熟
+            </button>
+            <button type="button" data-sound="none" onClick={() => handleGrade("forgotten")} className="inline-flex h-12 items-center justify-center gap-1 rounded-2xl border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 shadow-sm transition active:scale-95">
+              <ThumbsDown size={15} aria-hidden="true" />
+              不记住
+            </button>
+          </div>
+        }
+      >
 
         <ModeTabs
           value={mode}
@@ -120,24 +142,9 @@ export function RecallPage({ title, words, progressMap, audioSettings, initialDu
           word={current.word}
           phonetic={current.phonetic}
           definitions={current.definitions}
-          bottomOffset="calc(132px + env(safe-area-inset-bottom))"
+          bottomOffset="calc(var(--mobile-bottom-nav-height) + var(--mobile-action-bar-height) + env(safe-area-inset-bottom) + 16px)"
         />
-
-        <div className="fixed inset-x-3 z-40 grid grid-cols-3 gap-2" style={{ bottom: "calc(78px + env(safe-area-inset-bottom))" }}>
-          <button type="button" data-sound="none" onClick={() => handleGrade("known")} className="inline-flex h-12 items-center justify-center gap-1 rounded-2xl bg-emerald-500 px-2 text-xs font-semibold text-white shadow-sm transition active:scale-95">
-            <ThumbsUp size={15} aria-hidden="true" />
-            记住
-          </button>
-          <button type="button" data-sound="none" onClick={() => handleGrade("fuzzy")} className="inline-flex h-12 items-center justify-center gap-1 rounded-2xl border border-amber-300 bg-amber-50 px-2 text-xs font-semibold text-amber-700 shadow-sm transition active:scale-95">
-            <RotateCcw size={15} aria-hidden="true" />
-            不太熟
-          </button>
-          <button type="button" data-sound="none" onClick={() => handleGrade("forgotten")} className="inline-flex h-12 items-center justify-center gap-1 rounded-2xl border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 shadow-sm transition active:scale-95">
-            <ThumbsDown size={15} aria-hidden="true" />
-            不记住
-          </button>
-        </div>
-      </div>
+      </MobileStudyShell>
     );
   }
 

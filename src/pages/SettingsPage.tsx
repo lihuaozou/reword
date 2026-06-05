@@ -1,13 +1,16 @@
-import { Volume2 } from "lucide-react";
+import { Megaphone, Volume2 } from "lucide-react";
 import type { AudioAccent, AudioSettings, SoundSettings, SyncState, UserStats } from "../types";
 import { CloudConfigStatusCard } from "../components/auth/CloudConfigStatusCard";
 import { InstallGuideCard } from "../components/InstallGuideCard";
 import { playToggleSound } from "../utils/sound";
+import type { MotivationMode, MotivationSettings } from "../utils/motivation";
 
 type SettingsPageProps = {
   stats: UserStats;
   onUpdateAudio: (settings: AudioSettings) => void;
   onUpdateSound: (settings: SoundSettings) => void;
+  motivationSettings: MotivationSettings;
+  onUpdateMotivation: (settings: MotivationSettings) => void;
   syncStatus: {
     online: boolean;
     state: SyncState;
@@ -26,11 +29,12 @@ const volumeOptions: Array<{ label: string; value: SoundSettings["volume"] }> = 
   { label: "100%", value: 1 },
 ];
 
-export function SettingsPage({ stats, onUpdateAudio, onUpdateSound, syncStatus }: SettingsPageProps) {
+export function SettingsPage({ stats, onUpdateAudio, onUpdateSound, motivationSettings, onUpdateMotivation, syncStatus }: SettingsPageProps) {
   const settings = stats.audioSettings;
   const soundSettings = stats.soundSettings;
   const update = (patch: Partial<AudioSettings>) => onUpdateAudio({ ...settings, ...patch });
   const updateSound = (patch: Partial<SoundSettings>) => onUpdateSound({ ...soundSettings, ...patch });
+  const updateMotivation = (patch: Partial<MotivationSettings>) => onUpdateMotivation({ ...motivationSettings, ...patch });
   return (
     <div className="space-y-5">
       <div>
@@ -72,6 +76,61 @@ export function SettingsPage({ stats, onUpdateAudio, onUpdateSound, syncStatus }
               <option value={2}>2 次</option>
             </select>
           </label>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 font-semibold text-ink">
+              <Megaphone size={18} aria-hidden="true" />
+              考研激励
+            </div>
+            <p className="mt-2 text-sm leading-6 text-slate-500">控制开屏提醒、错题激励、打卡反馈和首页动力文案。</p>
+          </div>
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-sky-100 bg-[#f8fbff] px-3 py-2 text-sm font-semibold text-harbor">
+            <input type="checkbox" checked={motivationSettings.enabled} onChange={(event) => updateMotivation({ enabled: event.target.checked })} />
+            开启
+          </label>
+        </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <label className="rounded-lg bg-[#f8fbff] p-3">
+            <span className="mb-2 block text-sm font-semibold text-slate-700">激励模式</span>
+            <select value={motivationSettings.tone} onChange={(event) => updateMotivation({ tone: event.target.value as MotivationMode })} className="w-full rounded-md border border-slate-200 bg-white p-2">
+              <option value="gentle">温柔鼓励</option>
+              <option value="hard">清醒狠话</option>
+              <option value="teacher">考研老师式</option>
+              <option value="mixed">混合模式</option>
+            </select>
+          </label>
+          <label className="rounded-lg bg-[#f8fbff] p-3">
+            <span className="mb-2 block text-sm font-semibold text-slate-700">强度</span>
+            <select value={motivationSettings.intensity} onChange={(event) => updateMotivation({ intensity: Number(event.target.value) as MotivationSettings["intensity"] })} className="w-full rounded-md border border-slate-200 bg-white p-2">
+              <option value={1}>轻一点</option>
+              <option value={2}>正常</option>
+              <option value={3}>狠一点</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {[
+            ["每日开屏激励", "launchModal"],
+            ["错题激励", "wrongAnswerMotivation"],
+            ["打卡激励", "checkinMotivation"],
+            ["偷懒提醒", "missedTaskReminder"],
+            ["倒计时显示", "showCountdown"],
+          ].map(([label, key]) => (
+            <label key={key} className="flex items-center justify-between rounded-lg bg-[#f8fbff] p-3 text-sm font-semibold text-slate-700">
+              <span>{label}</span>
+              <input
+                type="checkbox"
+                checked={Boolean(motivationSettings[key as keyof MotivationSettings])}
+                onChange={(event) => updateMotivation({ [key]: event.target.checked } as Partial<MotivationSettings>)}
+              />
+            </label>
+          ))}
         </div>
       </section>
 

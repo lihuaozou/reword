@@ -3,11 +3,13 @@ import { useEffect, useMemo, useState } from "react";
 import type { AudioSettings, ProgressMap, WordEntry } from "../types";
 import { AudioButton } from "../components/AudioButton";
 import { EmptyState } from "../components/EmptyState";
+import { MobileStudyShell } from "../components/layout/MobileStudyShell";
 import { ProgressBar } from "../components/ProgressBar";
 import { WordCard } from "../components/WordCard";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useResponsive } from "../hooks/useResponsive";
 import { playWordAudio } from "../utils/audio";
+import { getMotivationByScene, type MotivationSettings } from "../utils/motivation";
 import { createQuizQuestions, type QuizQuestion } from "../utils/quiz";
 
 type QuizPageProps = {
@@ -16,16 +18,18 @@ type QuizPageProps = {
   allWords: WordEntry[];
   progressMap: ProgressMap;
   audioSettings: AudioSettings;
+  motivationSettings?: MotivationSettings;
   onAnswer: (wordId: string, correct: boolean) => void;
 };
 
-export function QuizPage({ title, words, allWords, progressMap, audioSettings, onAnswer }: QuizPageProps) {
+export function QuizPage({ title, words, allWords, progressMap, audioSettings, motivationSettings, onAnswer }: QuizPageProps) {
   const [questionSeed, setQuestionSeed] = useState(0);
   const [quizWords, setQuizWords] = useState(words);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | undefined>();
   const [score, setScore] = useState({ correct: 0, wrong: 0 });
   const [wrongWords, setWrongWords] = useState<WordEntry[]>([]);
+  const [showDefinition, setShowDefinition] = useState(false);
   const questions = useMemo(() => createQuizQuestions(quizWords, allWords), [quizWords, allWords, questionSeed]);
   const question: QuizQuestion | undefined = questions[index];
   const finished = index >= questions.length;
@@ -34,6 +38,8 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
   const total = score.correct + score.wrong;
   const accuracy = total ? Math.round((score.correct / total) * 100) : 0;
   const { isMobile } = useResponsive();
+  const showWrongMotivation = Boolean(motivationSettings?.enabled !== false && motivationSettings?.wrongAnswerMotivation !== false);
+  const wrongQuote = showWrongMotivation && answered && !correct ? getMotivationByScene("wrong_answer", motivationSettings) : null;
 
   useEffect(() => {
     setQuizWords(words);
@@ -41,6 +47,7 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
     setSelected(undefined);
     setScore({ correct: 0, wrong: 0 });
     setWrongWords([]);
+    setShowDefinition(false);
   }, [words]);
 
   const restart = (nextWords = words) => {
@@ -50,12 +57,14 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
     setSelected(undefined);
     setScore({ correct: 0, wrong: 0 });
     setWrongWords([]);
+    setShowDefinition(false);
   };
 
   const choose = (option: string) => {
     if (!question || answered) return;
     const isCorrect = option === question.answer;
     setSelected(option);
+    setShowDefinition(false);
     setScore((value) => ({
       correct: value.correct + (isCorrect ? 1 : 0),
       wrong: value.wrong + (isCorrect ? 0 : 1),
@@ -67,7 +76,13 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
   const nextQuestion = () => {
     if (!answered) return;
     setSelected(undefined);
+    setShowDefinition(false);
     setIndex((value) => value + 1);
+  };
+
+  const retryCurrent = () => {
+    setSelected(undefined);
+    setShowDefinition(false);
   };
 
   useKeyboardShortcuts({
@@ -118,20 +133,29 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
 
   if (isMobile) {
     return (
-      <div className="min-h-[calc(100dvh-136px)] space-y-2 overflow-x-hidden pb-36">
-        <div className="flex h-8 items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase text-copper">Quiz</div>
-            <h1 className="truncate text-base font-semibold text-ink">{title}</h1>
+      <MobileStudyShell
+        header={
+          <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-soft backdrop-blur-xl">
+            <div className="flex min-h-9 items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="truncate text-sm font-semibold text-ink">{title}</h1>
+                <div className="text-[11px] font-medium text-slate-500">正确率 {accuracy}%</div>
+              </div>
+              <div className="shrink-0 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-xs font-semibold text-harbor shadow-sm">
+                {index + 1}/{questions.length}
+              </div>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink/10">
+              <div className="h-full rounded-full bg-harbor" style={{ width: `${Math.min(100, ((index + 1) / questions.length) * 100)}%` }} />
+            </div>
           </div>
-          <div className="shrink-0 text-right text-xs text-slate-500">
-            {index + 1}/{questions.length} · {accuracy}%
-          </div>
-        </div>
-
-        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
-          <div className="h-full rounded-full bg-harbor" style={{ width: `${Math.min(100, ((index + 1) / questions.length) * 100)}%` }} />
-        </div>
+        }
+        actionBar={
+          <button type="button" onClick={nextQuestion} disabled={!answered} className="btn-primary h-12 min-h-0 w-full disabled:opacity-40">
+            下一题
+          </button>
+        }
+      >
 
         <section className="rounded-3xl border border-slate-200 bg-white p-3 shadow-soft">
           <div className="pb-3 pt-2 text-center">
@@ -172,20 +196,36 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
           {answered ? (
             <div className={`mt-2 rounded-2xl px-3 py-2 text-[13px] font-semibold leading-snug ${correct ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
               {correct ? "回答正确，阶段会向前推进。" : `回答错误：${question.answer}`}
+              {wrongQuote ? (
+                <div className="mt-2 rounded-xl border border-rose-100 bg-white/80 p-2 text-slate-800">
+                  <div className="text-[13px] font-semibold text-rose-700">{wrongQuote.text}</div>
+                  {wrongQuote.subtext ? <div className="mt-1 text-xs font-medium text-slate-500">{wrongQuote.subtext}</div> : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
-          <button
-            type="button"
-            onClick={nextQuestion}
-            disabled={!answered}
-            className="btn-primary fixed inset-x-3 z-40 h-12 min-h-0 disabled:opacity-40"
-            style={{ bottom: "calc(78px + env(safe-area-inset-bottom))" }}
-          >
-            下一题
-          </button>
+          {showDefinition ? <div className="mt-2"><WordCard word={question.word} progress={progressMap[question.word.id]} compact audioSettings={audioSettings} /></div> : null}
+
+          {answered && !correct ? (
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => restart([question.word])} className="btn-secondary h-10 min-h-0 px-2 text-xs">
+                错题强化
+              </button>
+              <button type="button" onClick={() => setShowDefinition((value) => !value)} className="btn-secondary h-10 min-h-0 px-2 text-xs">
+                查看释义
+              </button>
+              <button type="button" onClick={retryCurrent} className="btn-secondary h-10 min-h-0 px-2 text-xs">
+                再来一次
+              </button>
+              <button type="button" onClick={nextQuestion} className="btn-primary h-10 min-h-0 px-2 text-xs">
+                下一题
+              </button>
+            </div>
+          ) : null}
+
         </section>
-      </div>
+      </MobileStudyShell>
     );
   }
 
@@ -244,12 +284,33 @@ export function QuizPage({ title, words, allWords, progressMap, audioSettings, o
             {answered ? (
               <div className={`mt-4 rounded-lg p-4 text-sm ${correct ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
                 {correct ? "回答正确，阶段会向前推进。" : `回答错误，正确答案是：${question.answer}`}
+                {wrongQuote ? (
+                  <div className="mt-3 rounded-lg border border-rose-100 bg-white/80 p-3 text-slate-800">
+                    <div className="font-semibold text-rose-700">{wrongQuote.text}</div>
+                    {wrongQuote.subtext ? <div className="mt-1 text-xs text-slate-500">{wrongQuote.subtext}</div> : null}
+                  </div>
+                ) : null}
                 <div className="mt-3 flex gap-2">
                   <AudioButton word={question.word.word} accent="us" settings={audioSettings} />
                   <AudioButton word={question.word.word} accent="uk" settings={audioSettings} />
                 </div>
+                {!correct ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" onClick={() => restart([question.word])} className="btn-secondary min-h-9 px-3 py-1.5 text-xs">
+                      加入错题强化
+                    </button>
+                    <button type="button" onClick={() => setShowDefinition((value) => !value)} className="btn-secondary min-h-9 px-3 py-1.5 text-xs">
+                      查看释义
+                    </button>
+                    <button type="button" onClick={retryCurrent} className="btn-secondary min-h-9 px-3 py-1.5 text-xs">
+                      再来一次
+                    </button>
+                  </div>
+                ) : null}
               </div>
             ) : null}
+
+            {showDefinition ? <WordCard word={question.word} progress={progressMap[question.word.id]} compact audioSettings={audioSettings} /> : null}
 
             <div className="mt-5 flex justify-end">
               <button type="button" onClick={nextQuestion} disabled={!answered} className="btn-primary disabled:opacity-40">

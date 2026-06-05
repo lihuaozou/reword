@@ -25,6 +25,8 @@ import { ProgressBar } from "../components/ProgressBar";
 import { ReviewTimeline } from "../components/ReviewTimeline";
 import { StatCard } from "../components/StatCard";
 import { SyncStatusBadge } from "../components/auth/SyncStatusBadge";
+import { DailyContractCard } from "../components/motivation/DailyContractCard";
+import { MotivationCard } from "../components/motivation/MotivationCard";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { canCheckIn, getCheckInTasks } from "../utils/checkin";
 import { toLocalDateKey } from "../utils/date";
@@ -32,12 +34,14 @@ import { EXAM_ENGLISH_TARGET, getExamCountdown, getTodayQuote } from "../utils/e
 import { calculateTodayStats, getDueWords } from "../utils/scheduler";
 import { formatDuration, getStudyStats } from "../utils/statistics";
 import { formatDateTime } from "../utils/view";
+import { normalizeMotivationSettings, type MotivationSettings } from "../utils/motivation";
 
 type DashboardPageProps = {
   units: WordUnit[];
   words: WordEntry[];
   progressMap: ProgressMap;
   stats: UserStats;
+  motivationSettings?: MotivationSettings;
   onSignIn: () => void;
   onContinueStudy: () => void;
   onNavigateReview: () => void;
@@ -65,6 +69,7 @@ export function DashboardPage({
   words,
   progressMap,
   stats,
+  motivationSettings,
   onSignIn,
   onContinueStudy,
   onNavigateReview,
@@ -89,13 +94,16 @@ export function DashboardPage({
   const recentRewards = stats.rewardHistory.slice(0, 3);
   const countdown = getExamCountdown();
   const quote = getTodayQuote();
-  const examDate = `${EXAM_ENGLISH_TARGET.getFullYear()}-12-19 14:00`;
+  const examDate = `${EXAM_ENGLISH_TARGET.getFullYear()}-12-20`;
   const completion = todayStats.totalCount ? Math.round((todayStats.masteredCount / todayStats.totalCount) * 100) : 0;
   const [localSyncTipSeen, setLocalSyncTipSeen] = useLocalStorage("reword-local-sync-tip-seen", false);
   const showLocalSyncTip = !syncStatus.configured && !localSyncTipSeen;
+  const nextMotivationSettings = normalizeMotivationSettings(motivationSettings);
 
   return (
     <div className="space-y-5 pb-2">
+      <MotivationCard words={words} progressMap={progressMap} stats={stats} settings={nextMotivationSettings} onStart={onContinueStudy} />
+
       <section className="relative min-h-[520px] overflow-hidden rounded-lg app-hero-wallpaper p-4 shadow-lifted sm:min-h-[560px] md:p-6">
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(251,250,246,0.82)_0%,rgba(251,250,246,0.46)_38%,rgba(23,33,43,0.24)_100%)]" />
         <div className="relative flex h-full min-h-[488px] flex-col justify-between gap-6 sm:min-h-[528px]">
@@ -197,6 +205,10 @@ export function DashboardPage({
           </span>
           <ChevronRight className="text-slate-400 transition group-hover:translate-x-1 group-hover:text-ink" size={22} aria-hidden="true" />
         </button>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[1fr_0.95fr]">
+        <DailyContractCard words={words} progressMap={progressMap} stats={stats} settings={nextMotivationSettings} />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1fr_0.95fr]">

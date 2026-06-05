@@ -17,14 +17,14 @@ type AppShellProps = {
 };
 
 export function AppShell({ current, onNavigate, user = null, profile = null, children }: AppShellProps) {
-  const isLearningRoute = current === "study" || current === "recall" || current === "quiz";
+  const isLearningRoute = current === "study" || current === "recall" || current === "quiz" || current === "review";
 
   return (
-    <div className="min-h-screen bg-app text-ink">
+    <div className="min-h-[100dvh] bg-app text-ink">
       <DesktopSidebar current={current} onNavigate={onNavigate} />
       <TabletSidebar current={current} onNavigate={onNavigate} />
 
-      <header className="sticky top-0 z-30 bg-paper/75 backdrop-blur-2xl md:hidden">
+      <header className={`sticky top-0 z-30 bg-paper/75 backdrop-blur-2xl md:hidden ${isLearningRoute ? "hidden" : ""}`}>
         <div className="mx-auto flex items-center justify-between px-4 py-3">
           <button type="button" onClick={() => onNavigate("dashboard")} className="flex items-center gap-3 text-left">
             <span className="grid h-9 w-9 place-items-center rounded-lg border border-white/70 bg-ink text-paper shadow-sm">
@@ -40,7 +40,11 @@ export function AppShell({ current, onNavigate, user = null, profile = null, chi
       </header>
 
       <div className="md:pl-20 lg:pl-64">
-        <ResponsiveContainer className={isLearningRoute ? "px-3 pb-0 pt-2 md:px-6 md:pb-12 md:pt-5 lg:px-8 lg:pt-6" : ""}>{children}</ResponsiveContainer>
+        {isLearningRoute ? (
+          <main className="w-full px-3 pb-0 pt-0 md:mx-auto md:max-w-5xl md:px-6 md:pb-12 md:pt-5 lg:max-w-7xl lg:px-8 lg:pt-6">{children}</main>
+        ) : (
+          <ResponsiveContainer>{children}</ResponsiveContainer>
+        )}
       </div>
       <MobileBottomNav current={current} onNavigate={onNavigate} />
     </div>

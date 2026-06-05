@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  --mobile-bottom-nav-height: 76px;
+  --mobile-action-bar-height: 76px;
   color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -132,6 +134,42 @@ input {
 
   .nav-dock {
     padding-bottom: max(env(safe-area-inset-bottom), 8px);
+  }
+
+  .mobile-bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    min-height: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobile-study-shell {
+    min-height: 100dvh;
+    height: 100dvh;
+    overflow: hidden;
+    padding-top: calc(env(safe-area-inset-top) + 6px);
+    padding-bottom: calc(var(--mobile-bottom-nav-height) + var(--mobile-action-bar-height) + env(safe-area-inset-bottom) + 16px);
+  }
+
+  .mobile-study-shell-standalone {
+    padding-top: calc(env(safe-area-inset-top) + 4px);
+  }
+
+  .mobile-study-main {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .mobile-study-action-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom) + 8px);
+    z-index: 40;
   }
 
   .word-card-swap {

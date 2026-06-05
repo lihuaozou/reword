@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "./components/AppShell";
 import { RewardToast } from "./components/RewardToast";
+import { CheckinSuccessModal, type CheckinSuccessSummary } from "./components/motivation/CheckinSuccessModal";
+import { LaunchMotivationModal } from "./components/motivation/LaunchMotivationModal";
 import { AccountPage } from "./pages/AccountPage";
 import { AchievementsPage } from "./pages/AchievementsPage";
 import { CheckInPage } from "./pages/CheckInPage";
@@ -25,11 +27,14 @@ import { StudyTimer } from "./components/StudyTimer";
 import { units, words } from "./data/words";
 import { useAuth } from "./hooks/useAuth";
 import { useCloudSync } from "./hooks/useCloudSync";
+import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useSoundEffects } from "./hooks/useSoundEffects";
 import type { AppRoute, AudioSettings, ProgressMap, RewardRecord, RouteName, ShopItem, SoundSettings, StudySession, SyncSnapshot, UserStats, WordEntry, WordProgress } from "./types";
 import { unlockAvailableAchievements } from "./utils/achievements";
-import { canCheckIn, checkInToday, signInToday } from "./utils/checkin";
+import { canCheckIn, checkInToday, getTodayLearningCounts, signInToday } from "./utils/checkin";
+import { toLocalDateKey } from "./utils/date";
 import { getBossStatus } from "./utils/monster";
+import { defaultMotivationSettings, type MotivationSettings } from "./utils/motivation";
 import { applyReward } from "./utils/rewards";
 import { appendHistory, createEmptyProgress, exportProgressToJson, getLastStudyPosition, getProgress, getUserStats, importProgressFromJson, resetAllProgress, saveLastStudyPosition, saveProgress, saveUserStats } from "./utils/storage";
 import { addStudySession, getStudyStats } from "./utils/statistics";
@@ -62,6 +67,10 @@ export default function App() {
   const [userStats, setUserStats] = useState<UserStats>(() => getUserStats());
   const [latestReward, setLatestReward] = useState<RewardRecord | undefined>();
   const [updateReady, setUpdateReady] = useState(false);
+  const [motivationSettings, setMotivationSettings] = useLocalStorage<MotivationSettings>("motivationSettings", defaultMotivationSettings);
+  const [launchLastShownDate, setLaunchLastShownDate] = useLocalStorage<string | null>("motivation.lastShownDate", null);
+  const [showLaunchMotivation, setShowLaunchMotivation] = useState(false);
+  const [checkinSuccess, setCheckinSuccess] = useState<CheckinSuccessSummary | null>(null);
   const auth = useAuth();
   useSoundEffects(userStats.soundSettings);
 
@@ -113,6 +122,12 @@ export default function App() {
     window.addEventListener("reword:update-ready", onUpdateReady);
     return () => window.removeEventListener("reword:update-ready", onUpdateReady);
   }, []);
+
+  useEffect(() => {
+    const today = toLocalDateKey();
+    if (!motivationSettings.enabled || !motivationSettings.launchModal || route.name !== "dashboard" || launchLastShownDate === today) return;
+    setShowLaunchMotivation(true);
+  }, [launchLastShownDate, motivationSettings.enabled, motivationSettings.launchModal, route.name]);
 
   const refreshToLatestVersion = async () => {
     const registration = await navigator.serviceWorker?.getRegistration();
@@ -380,6 +395,18 @@ export default function App() {
       return;
     }
     playRewardSound(userStats.soundSettings);
+    const counts = getTodayLearningCounts(words, progressMap, userStats);
+    const preview = checkInToday(userStats);
+    const record = preview.checkInHistory[0];
+    if (record && motivationSettings.enabled && motivationSettings.checkinMotivation) {
+      setCheckinSuccess({
+        streak: preview.currentStreak,
+        studyMinutes: counts.studyMinutes,
+        wordCount: counts.newWords + counts.reviewedWords,
+        xp: record.rewardXp,
+        coins: record.rewardCoins,
+      });
+    }
     updateStats((stats) => checkInToday(stats));
   };
 
@@ -436,6 +463,20 @@ export default function App() {
 
   const handleUpdateSound = (settings: SoundSettings) => {
     updateStats((stats) => ({ ...stats, soundSettings: settings }));
+  };
+
+  const handleUpdateMotivation = (settings: MotivationSettings) => {
+    setMotivationSettings(settings);
+  };
+
+  const closeLaunchMotivation = () => {
+    setLaunchLastShownDate(toLocalDateKey());
+    setShowLaunchMotivation(false);
+  };
+
+  const startFromLaunchMotivation = () => {
+    closeLaunchMotivation();
+    continueStudy();
   };
 
   const continueStudy = () => {
@@ -539,6 +580,7 @@ export default function App() {
           words={words}
           progressMap={progressMap}
           stats={userStats}
+          motivationSettings={motivationSettings}
           onSignIn={handleSignIn}
           onContinueStudy={continueStudy}
           onNavigateReview={() => setRoute({ name: "review" })}
@@ -609,7 +651,7 @@ export default function App() {
 
     if (route.name === "quiz") {
       const quizTitle = route.quizMode === "wrong" ? "错题强化测试" : route.unitId ? `${selectedUnit.name} 测试功能` : "总测试功能";
-      return <QuizPage title={quizTitle} words={scopeWords} allWords={words} progressMap={progressMap} audioSettings={userStats.audioSettings} onAnswer={answerQuiz} />;
+      return <QuizPage title={quizTitle} words={scopeWords} allWords={words} progressMap={progressMap} audioSettings={userStats.audioSettings} motivationSettings={motivationSettings} onAnswer={answerQuiz} />;
     }
 
     if (route.name === "total") {
@@ -667,6 +709,8 @@ export default function App() {
           stats={userStats}
           onUpdateAudio={handleUpdateAudio}
           onUpdateSound={handleUpdateSound}
+          motivationSettings={motivationSettings}
+          onUpdateMotivation={handleUpdateMotivation}
           syncStatus={{
             online: cloudSync.online,
             state: cloudSync.state,
@@ -731,6 +775,8 @@ export default function App() {
         </div>
       ) : null}
       {renderPage()}
+      <LaunchMotivationModal open={showLaunchMotivation} settings={motivationSettings} onStart={startFromLaunchMotivation} onClose={closeLaunchMotivation} />
+      <CheckinSuccessModal open={Boolean(checkinSuccess)} summary={checkinSuccess} settings={motivationSettings} onClose={() => setCheckinSuccess(null)} />
       <StudyTimer mode={timerMode} unitId={route.unitId} wordCount={scopeWords.length} onComplete={handleSessionComplete} />
     </AppShell>
   );

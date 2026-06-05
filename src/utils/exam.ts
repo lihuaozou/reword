@@ -1,4 +1,6 @@
-export const EXAM_ENGLISH_TARGET = new Date("2026-12-19T14:00:00+08:00");
+import { EXAM_TARGET_DATE } from "./examCountdown";
+
+export const EXAM_ENGLISH_TARGET = EXAM_TARGET_DATE;
 
 export const EXAM_QUOTES = [
   "坚持就是胜利，重复就是答案。",

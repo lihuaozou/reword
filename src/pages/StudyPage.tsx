@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight, Check, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { AudioSettings, ProgressMap, WordEntry, WordUnit } from "../types";
+import { MobileStudyShell } from "../components/layout/MobileStudyShell";
 import { ProgressBar } from "../components/ProgressBar";
 import { UnitWordIndexBar } from "../components/UnitWordIndexBar";
 import { WordCard } from "../components/WordCard";
@@ -88,28 +89,26 @@ export function StudyPage({ unit, words, progressMap, audioSettings, initialWord
 
   if (isMobile) {
     return (
-      <div className="min-h-[calc(100dvh-136px)] space-y-2.5 overflow-x-hidden pb-40">
-        <div className="sticky top-0 z-10 -mx-3 bg-paper/75 px-3 pb-3 pt-1 backdrop-blur-xl">
-          <div className="flex h-9 items-center justify-between gap-3">
+      <MobileStudyShell
+        header={
+          <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-soft backdrop-blur-xl">
+            <div className="flex min-h-9 items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold text-ink">{unit?.name || "总记忆"}</div>
               <div className="text-[11px] font-medium text-slate-500">已学 {learnedCount} 词</div>
             </div>
-            <div className="shrink-0 rounded-lg border border-white/80 bg-white/80 px-2.5 py-1 text-xs font-semibold text-harbor shadow-sm">
+              <div className="shrink-0 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-xs font-semibold text-harbor shadow-sm">
               {index + 1}/{words.length}
             </div>
           </div>
 
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink/10">
-            <div className="h-full rounded-full bg-harbor transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink/10">
+              <div className="h-full rounded-full bg-harbor transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+            </div>
           </div>
-        </div>
-
-        <div key={current.id} className="word-card-swap">
-          <WordCard word={current} progress={currentProgress} audioSettings={audioSettings} mobileCompact />
-        </div>
-
-        <UnitWordIndexBar
+        }
+        indexBar={
+          <UnitWordIndexBar
           words={words}
           currentIndex={index}
           progressMap={progressMap}
@@ -118,14 +117,9 @@ export function StudyPage({ unit, words, progressMap, audioSettings, initialWord
             setIndex(nextIndex);
           }}
         />
-
-        {notice ? (
-          <div className="fixed inset-x-6 z-50 rounded-2xl border border-emerald-200 bg-white/95 px-3 py-2 text-center text-xs font-semibold text-emerald-700 shadow-soft backdrop-blur" style={{ bottom: "calc(140px + env(safe-area-inset-bottom))" }}>
-            {notice}
-          </div>
-        ) : null}
-
-        <div className="fixed inset-x-3 z-40 grid grid-cols-3 gap-2" style={{ bottom: "calc(78px + env(safe-area-inset-bottom))" }}>
+        }
+        actionBar={
+          <div className="grid grid-cols-3 gap-2">
           <button type="button" onClick={() => move(-1)} disabled={index === 0} className="btn-secondary h-12 min-h-0 px-2 text-xs disabled:opacity-40">
             <ArrowLeft size={16} aria-hidden="true" />
             上一个
@@ -147,7 +141,18 @@ export function StudyPage({ unit, words, progressMap, audioSettings, initialWord
             <ArrowRight size={16} aria-hidden="true" />
           </button>
         </div>
-      </div>
+        }
+      >
+        <div key={current.id} className="word-card-swap pb-1">
+          <WordCard word={current} progress={currentProgress} audioSettings={audioSettings} mobileCompact />
+        </div>
+
+        {notice ? (
+          <div className="fixed inset-x-6 z-50 rounded-2xl border border-emerald-200 bg-white/95 px-3 py-2 text-center text-xs font-semibold text-emerald-700 shadow-soft backdrop-blur" style={{ bottom: "calc(var(--mobile-bottom-nav-height) + var(--mobile-action-bar-height) + env(safe-area-inset-bottom) + 10px)" }}>
+            {notice}
+          </div>
+        ) : null}
+      </MobileStudyShell>
     );
   }
 

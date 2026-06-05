@@ -26,8 +26,8 @@ export function UnitWordIndexBar({ words, currentIndex, progressMap, onSelectInd
   }, [currentIndex]);
 
   return (
-    <section className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-soft backdrop-blur-xl">
-      <div className="mb-2 flex items-center justify-between gap-3 px-1">
+    <section className="max-h-[68px] rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-soft backdrop-blur-xl">
+      <div className="mb-1.5 flex items-center justify-between gap-3 px-1">
         <div className="text-xs font-semibold text-ink">本单元词序</div>
         <div className="text-[11px] font-semibold text-slate-500">已学 {learnedCount} / {words.length}</div>
       </div>
@@ -37,7 +37,7 @@ export function UnitWordIndexBar({ words, currentIndex, progressMap, onSelectInd
           const learned = isWordLearned(word, progressMap);
           const active = index === currentIndex;
           const baseClass =
-            "grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full border text-xs font-semibold tabular-nums shadow-sm transition active:scale-95";
+            "grid h-7 w-7 shrink-0 place-items-center rounded-full border text-xs font-semibold tabular-nums shadow-sm transition active:scale-95";
           const stateClass = active
             ? learned
               ? "border-emerald-600 bg-emerald-500 text-white ring-2 ring-emerald-200"
