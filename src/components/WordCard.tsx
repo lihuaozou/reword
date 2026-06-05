@@ -104,7 +104,7 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
               <span className="text-xs font-semibold text-slate-500">#{word.order}</span>
             </div>
           </div>
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="flex flex-col gap-5 2xl:flex-row 2xl:items-end 2xl:justify-between">
             <div className="min-w-0 flex-1">
               <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-xs font-semibold text-slate-500">
                 <Sparkles size={14} aria-hidden="true" />
@@ -118,7 +118,7 @@ export function WordCard({ word, progress, compact = false, mobileCompact = fals
                 </div>
               ) : null}
             </div>
-            <div className="shrink-0 xl:w-80 xl:self-end">
+            <div className="shrink-0 2xl:w-80 2xl:self-end">
               <WordVisualCard word={word.word} phonetic={word.phonetic} definitions={word.definitions} image={word.image} imagePrompt={word.imagePrompt} visualPrompt={word.visualPrompt} />
             </div>
           </div>
